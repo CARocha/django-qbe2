@@ -4,6 +4,12 @@
 
 ### Added
 
+- Public Sphinx documentation covering installation, demo, report policies,
+  query types, settings, API reference, troubleshooting and contribution.
+- Strict HTML/plain-text documentation checks and a manual Pages workflow.
+- External-wheel verification of the documented consumer's row policies,
+  HTML results and CSV export.
+
 - Explicit report registration and row policies for Python 3.14/Django 6.1.
 - Authorized typed queries, forward relationships, stable bounded pagination.
 - Admin-integrated report builder, editing and responsive light/dark presentation.

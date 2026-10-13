@@ -100,8 +100,23 @@ authorization. The same policies apply to columns, filters, ordering, HTML and C
 Saved queries, aggregates, OR/NOT groups, ManyToMany, inverse relationships,
 arbitrary joins, multi-database selection, Excel and the visual diagram are later work.
 CSV uses a synchronous streaming iterator intended for WSGI deployment.
-See [integration details and limits](docs/integration.md) and
-[testing instructions](docs/testing.md). Contributor context lives in [AGENTS.md](AGENTS.md).
+See the [public documentation](docs/README.md) for installation, row policies,
+settings, API reference and troubleshooting. Sources are plain English
+reStructuredText under [docs/source](docs/source/index.rst), readable by developers
+and agents. Contributor instructions live in [AGENTS.md](AGENTS.md).
+
+## Build the documentation
+
+```sh
+uv sync --python 3.14 --frozen --group dev --group docs
+uv run --group docs sphinx-build -n -W -b html docs/source docs/_build/html
+uv run --group docs sphinx-build -n -W -b text docs/source docs/_build/text
+python -m http.server 8001 --bind 127.0.0.1 --directory docs/_build/html
+```
+
+Open http://127.0.0.1:8001/. Sphinx is a documentation dependency only. CI checks
+HTML and plain-text builds with warnings treated as errors. A manual GitHub Pages
+workflow is prepared; the documentation site is not yet published.
 
 ## License and attribution
 

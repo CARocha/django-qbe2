@@ -26,6 +26,9 @@ Issues = "https://github.com/CARocha/django-qbe2/issues"
 
 [dependency-groups]
 dev = ["ruff>=0.11", "psycopg[binary]>=3.2.10"]
+docs = [
+    "sphinx>=8.2,<10",
+]
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/django_qbe2"]
