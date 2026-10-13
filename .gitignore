@@ -71,6 +71,12 @@ instance/
 
 # Sphinx documentation
 docs/_build/
+docs/build/
+
+# Personal plans and local agent state
+/.superpowers/
+/tasks/
+/docs/superpowers/
 
 # PyBuilder
 .pybuilder/

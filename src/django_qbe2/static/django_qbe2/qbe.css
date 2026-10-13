@@ -1,0 +1,35 @@
+.qbe-workspace { max-width: 1100px; }
+.qbe-intro { color: var(--body-quiet-color); margin: 0 0 1.5rem; }
+.qbe-nav-link { color: var(--header-link-color); margin-inline-start: 1rem; }
+.qbe-report-picker { display: flex; align-items: end; gap: 1rem; margin-bottom: 1.5rem; }
+.qbe-report-picker > div { display: grid; gap: .5rem; min-width: 15rem; }
+.qbe-section { border: 1px solid var(--hairline-color); padding: 1rem; margin-bottom: 1rem; border-radius: 4px; }
+.qbe-section h2 { margin: -1rem -1rem 1rem; padding: .75rem 1rem; }
+.qbe-section > p { color: var(--body-quiet-color); }
+#id_columns { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: .75rem 1rem; margin-bottom: 1rem; }
+#id_columns label { display: flex; align-items: center; gap: .5rem; }
+.qbe-row { display: grid; grid-template-columns: minmax(140px, 1fr) minmax(140px, 1fr) minmax(140px, 1fr) auto; gap: 1rem; align-items: end; margin-bottom: 1rem; }
+.qbe-row > div { display: flex; flex-direction: column; gap: .5rem; }
+.qbe-row input:not([type=checkbox]), .qbe-row select { box-sizing: border-box; width: 100%; max-width: 100%; min-height: 36px; }
+.qbe-row-deleted { border-inline-start: 3px solid var(--delete-button-bg); padding-inline-start: .75rem; }
+.qbe-add-row { margin: 0 0 1rem; }
+.qbe-workspace button { cursor: pointer; min-height: 36px; padding: .5rem 1rem; border: 1px solid var(--hairline-color); border-radius: 4px; background: var(--button-bg); color: var(--button-fg); }
+.qbe-workspace button:focus-visible, .qbe-workspace input:focus-visible, .qbe-workspace select:focus-visible, .qbe-table-scroll:focus-visible { outline: 2px solid var(--link-fg); outline-offset: 3px; }
+.qbe-workspace .errorlist { margin: .5rem 0; padding: .75rem; }
+.qbe-workspace .submit-row { text-align: start; }
+.qbe-workspace .submit-row input { min-height: 40px; }
+.qbe-table-scroll { overflow-x: auto; border: 1px solid var(--hairline-color); border-radius: 4px; }
+.qbe-table-scroll table { width: 100%; }
+.qbe-table-scroll th, .qbe-table-scroll td { padding: .75rem 1rem; white-space: nowrap; }
+.qbe-pagination { display: flex; flex-wrap: wrap; align-items: center; gap: 1rem; margin: 1.5rem 0; }
+.qbe-warning { border-inline-start: 3px solid var(--primary); padding: .75rem 1rem; background: var(--darkened-bg); }
+.qbe-export { border-top: 1px solid var(--hairline-color); padding-top: 1.5rem; }
+.qbe-empty { padding: 1.5rem; border: 1px solid var(--hairline-color); }
+@media (max-width: 767px) {
+  .qbe-report-picker { flex-direction: column; align-items: stretch; }
+  .qbe-row { grid-template-columns: 1fr; border-bottom: 1px solid var(--hairline-color); padding-bottom: 1rem; }
+  .qbe-row > div:last-child { flex-direction: row; align-items: center; }
+  .qbe-section { padding: .75rem; }
+  .qbe-section h2 { margin: -.75rem -.75rem .75rem; }
+  #id_columns { grid-template-columns: 1fr; }
+}

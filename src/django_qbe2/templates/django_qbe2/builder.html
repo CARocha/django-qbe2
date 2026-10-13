@@ -1,0 +1,48 @@
+{% extends "django_qbe2/base.html" %}
+{% load i18n static %}
+{% block extrahead %}{{ block.super }}<script src="{% static 'django_qbe2/builder.js' %}" defer></script>{% endblock %}
+{% block breadcrumbs %}<div class="breadcrumbs"><a href="{% url 'admin:index' %}">{% translate "Home" %}</a> &rsaquo; {% translate "Reports" %}</div>{% endblock %}
+{% block content %}
+<div class="qbe-workspace">
+  <p class="qbe-intro">{% translate "Choose the data you need. Add conditions, preview results, and export your report." %}</p>
+  <p id="qbe-feedback" class="visually-hidden" role="status" aria-live="polite"></p>
+  {% if has_reports %}
+  <form method="get" class="qbe-report-picker">
+    {{ form.report.as_field_group }}
+    <button type="submit" class="button">{% translate "Choose report" %}</button>
+  </form>
+  {% url 'django_qbe2:results' as results_url %}
+  <form method="post" action="{{ results_url }}" id="qbe-builder">
+    {% csrf_token %}
+    <input type="hidden" name="report" value="{{ form.report.value }}">
+    {% if form.errors %}<div role="alert" id="query-errors">{{ form.non_field_errors }}{{ form.report.errors }}</div>{% endif %}
+    <section class="module qbe-section">
+      <h2>{% translate "1. Columns" %}</h2>
+      <p>{% translate "Select the fields to include in your report." %}</p>
+      {{ form.columns.errors }}{{ form.columns }}
+    </section>
+    <section class="module qbe-section">
+      <h2>{% translate "2. Conditions" %}</h2>
+      <p>{% translate "All conditions must match. For boolean values, use true or false." %}</p>
+      {{ form.filters.management_form }}{{ form.filters.non_form_errors }}
+      <div id="filter-rows">{% for row in form.filters %}<div class="qbe-row">{{ row.as_div }}</div>{% endfor %}</div>
+      <button type="button" class="button qbe-add-row" data-prefix="filters" data-added-message="{% translate 'Condition added' %}" hidden>{% translate "Add condition" %}</button>
+      <template id="filters-empty-form"><div class="qbe-row">{{ form.filters.empty_form.as_div }}</div></template>
+    </section>
+    <section class="module qbe-section">
+      <h2>{% translate "3. Ordering" %}</h2>
+      {{ form.ordering.management_form }}{{ form.ordering.non_form_errors }}
+      <div id="ordering-rows">{% for row in form.ordering %}<div class="qbe-row">{{ row.as_div }}</div>{% endfor %}</div>
+      <button type="button" class="button qbe-add-row" data-prefix="ordering" data-added-message="{% translate 'Ordering added' %}" hidden>{% translate "Add ordering" %}</button>
+      <template id="ordering-empty-form"><div class="qbe-row">{{ form.ordering.empty_form.as_div }}</div></template>
+      {{ form.page_size.as_field_group }}
+    </section>
+    <div class="submit-row"><input type="submit" class="default" value="{% translate 'Preview report' %}"></div>
+  </form>
+  {{ field_data|json_script:"qbe-fields" }}
+  {{ widget_labels|json_script:"qbe-widget-labels" }}
+  {% else %}
+  <div class="module qbe-empty" role="status"><h2>{% translate "No reports available" %}</h2><p>{% translate "Ask your administrator to register a report and grant you access." %}</p></div>
+  {% endif %}
+</div>
+{% endblock %}

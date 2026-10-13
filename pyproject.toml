@@ -1,0 +1,41 @@
+[build-system]
+requires = ["hatchling>=1.27"]
+build-backend = "hatchling.build"
+
+[project]
+name = "django-qbe2"
+version = "0.1.0"
+description = "A reusable Django app for authorized query-by-example reports."
+readme = "README.md"
+requires-python = ">=3.14,<3.15"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [{ name = "Carlos A. Rocha" }]
+dependencies = ["Django>=6.1,<6.2"]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Framework :: Django",
+  "Framework :: Django :: 6.1",
+  "Programming Language :: Python :: 3.14",
+  "Intended Audience :: Developers",
+]
+
+[project.urls]
+Repository = "https://github.com/CARocha/django-qbe2"
+Issues = "https://github.com/CARocha/django-qbe2/issues"
+
+[dependency-groups]
+dev = ["ruff>=0.11", "psycopg[binary]>=3.2.10"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/django_qbe2"]
+
+[tool.hatch.build.targets.sdist]
+include = ["src/django_qbe2", "pyproject.toml", "README.md", "LICENSE"]
+
+[tool.ruff]
+target-version = "py314"
+line-length = 88
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]

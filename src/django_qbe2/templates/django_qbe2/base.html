@@ -1,0 +1,4 @@
+{% extends "admin/base_site.html" %}
+{% load static i18n %}
+{% block extrastyle %}{{ block.super }}<link rel="stylesheet" href="{% static 'django_qbe2/qbe.css' %}">{% endblock %}
+{% block nav-global %}<a class="qbe-nav-link" href="{% url 'django_qbe2:builder' %}">{% translate "Reports" %}</a>{% endblock %}

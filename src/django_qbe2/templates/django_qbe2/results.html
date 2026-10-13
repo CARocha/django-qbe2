@@ -1,0 +1,33 @@
+{% extends "django_qbe2/base.html" %}
+{% load i18n %}
+{% block breadcrumbs %}<div class="breadcrumbs"><a href="{% url 'admin:index' %}">{% translate "Home" %}</a> &rsaquo; <a href="{% url 'django_qbe2:builder' %}">{% translate "Reports" %}</a> &rsaquo; {% translate "Results" %}</div>{% endblock %}
+{% block content %}
+<div class="qbe-workspace">
+  <div class="qbe-results-heading">
+    <p>{% blocktranslate with count=page.total_limited %}{{ count }} matching rows{% endblocktranslate %}</p>
+    {% if page.truncated %}<p class="qbe-warning" role="status">{% blocktranslate %}Results limited to {{ limit }} rows. Refine your conditions to narrow the report.{% endblocktranslate %}</p>{% endif %}
+  </div>
+  <div class="module qbe-table-scroll" tabindex="0" role="region" aria-label="{% translate 'Report results table' %}">
+    <table>
+      <caption class="visually-hidden">{% translate "Report results" %}</caption>
+      <thead><tr>{% for label in page.labels %}<th scope="col">{{ label }}</th>{% endfor %}</tr></thead>
+      <tbody>{% for row in table_rows %}<tr>{% for cell in row %}<td>{{ cell|default_if_none:"—" }}</td>{% endfor %}</tr>{% empty %}<tr><td colspan="{{ page.labels|length }}">{% translate "No rows match your conditions." %}</td></tr>{% endfor %}</tbody>
+    </table>
+  </div>
+  <form method="post" action="{% url 'django_qbe2:results' %}" class="qbe-pagination">
+    {% csrf_token %}
+    <input type="hidden" name="definition" value="{{ definition_json }}">
+    <input type="hidden" name="page_size" value="{{ page.page_size }}">
+    {% if page.page > 1 %}<button type="submit" name="page" value="{{ previous_page }}">{% translate "Previous page" %}</button>{% endif %}
+    <span>{% blocktranslate with current=page.page total=page.num_pages %}Page {{ current }} of {{ total }}{% endblocktranslate %}</span>
+    {% if page.page < page.num_pages %}<button type="submit" name="page" value="{{ next_page }}">{% translate "Next page" %}</button>{% endif %}
+    <button type="submit" name="action" value="edit">{% translate "Edit report" %}</button>
+  </form>
+  {% url 'django_qbe2:export' as export_url %}
+  {% if export_url %}<form method="post" action="{{ export_url }}" class="qbe-export">
+    {% csrf_token %}<input type="hidden" name="definition" value="{{ definition_json }}">
+    <button type="submit" class="button default">{% translate "Export CSV" %}</button>
+    <p class="help">{% blocktranslate %}Exports all matching rows, up to {{ limit }} rows, in the same order.{% endblocktranslate %}</p>
+  </form>{% endif %}
+</div>
+{% endblock %}
