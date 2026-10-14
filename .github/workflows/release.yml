@@ -120,7 +120,13 @@ jobs:
           name: release-dist
           path: dist/
       - run: uv run --group release python scripts/release_checks.py index --index testpypi --dist dist
-      - run: uv run --group release python scripts/smoke_install.py --index testpypi
+      - name: Verify every supported consumer runtime
+        run: |
+          for qbe2_python in 3.13 3.14; do
+            for qbe2_django in 6.0 6.1; do
+              uv run --frozen --python "$qbe2_python" --group release --with "Django==$qbe2_django.*" python scripts/smoke_install.py --index testpypi
+            done
+          done
 
   promotion:
     if: inputs.destination == 'pypi'
@@ -190,4 +196,10 @@ jobs:
           name: release-dist
           path: dist/
       - run: uv run --group release python scripts/release_checks.py index --index pypi --dist dist
-      - run: uv run --group release python scripts/smoke_install.py --index pypi
+      - name: Verify every supported consumer runtime
+        run: |
+          for qbe2_python in 3.13 3.14; do
+            for qbe2_django in 6.0 6.1; do
+              uv run --frozen --python "$qbe2_python" --group release --with "Django==$qbe2_django.*" python scripts/smoke_install.py --index pypi
+            done
+          done

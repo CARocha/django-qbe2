@@ -4,18 +4,20 @@ build-backend = "hatchling.build"
 
 [project]
 name = "django-qbe2"
-version = "0.1.0a1"
+version = "0.1.0a2"
 description = "A reusable Django app for authorized query-by-example reports."
 readme = "README.md"
-requires-python = ">=3.14,<3.15"
+requires-python = ">=3.13,<3.15"
 license = "MIT"
 license-files = ["LICENSE"]
 authors = [{ name = "Carlos A. Rocha" }]
-dependencies = ["Django>=6.1,<6.2"]
+dependencies = ["Django>=6.0,<6.2"]
 classifiers = [
   "Development Status :: 3 - Alpha",
   "Framework :: Django",
+  "Framework :: Django :: 6.0",
   "Framework :: Django :: 6.1",
+  "Programming Language :: Python :: 3.13",
   "Programming Language :: Python :: 3.14",
   "Intended Audience :: Developers",
 ]
@@ -44,7 +46,7 @@ core-metadata-version = "2.4"
 include = ["src/django_qbe2", "pyproject.toml", "README.md", "LICENSE"]
 
 [tool.ruff]
-target-version = "py314"
+target-version = "py313"
 line-length = 88
 
 [tool.ruff.lint]
