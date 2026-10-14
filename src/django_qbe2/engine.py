@@ -5,7 +5,7 @@ from django.db.models import Model, Q, QuerySet
 from django.http import HttpRequest
 
 from django_qbe2.catalog import ReportSpec
-from django_qbe2.definitions import QueryDefinition
+from django_qbe2.definitions import ConditionGroup, FilterSpec, QueryDefinition
 
 
 def validate_scope(queryset: QuerySet, model: type[Model]) -> QuerySet:
@@ -24,6 +24,18 @@ def validate_scope(queryset: QuerySet, model: type[Model]) -> QuerySet:
         # contains() rejects an unsaved instance before accessing the database.
         pass
     return queryset
+
+
+def compile_condition(node: FilterSpec | ConditionGroup) -> Q:
+    if isinstance(node, FilterSpec):
+        return Q(**{f"{node.field}__{node.operator}": node.value})
+    predicate = Q()
+    for child in node.children:
+        compiled = compile_condition(child)
+        predicate = (
+            predicate & compiled if node.connector == "and" else predicate | compiled
+        )
+    return ~predicate if node.negated else predicate
 
 
 def build_queryset(
@@ -53,8 +65,11 @@ def build_queryset(
         )
         scoped_relations.add(field.relation_name)
     predicates = Q()
-    for condition in definition.filters:
-        predicates &= Q(**{f"{condition.field}__{condition.operator}": condition.value})
+    if definition.where is not None:
+        predicates = compile_condition(definition.where)
+    else:
+        for condition in definition.filters:
+            predicates &= compile_condition(condition)
     ordering = [
         f"{'-' if item.direction == 'desc' else ''}{item.field}"
         for item in definition.ordering
