@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "django-qbe2"
-version = "0.1.0a2"
+version = "0.1.0a3"
 description = "A reusable Django app for authorized query-by-example reports."
 readme = "README.md"
 requires-python = ">=3.13,<3.15"

@@ -49,6 +49,34 @@ Full-value lookups run field conversion and validators. Text fragment lookups
 length without whole-value format or custom validators. This allows searches such
 as EmailField contains ``@example.com`` or URLField contains ``example.com``.
 
+Model choices and labels
+------------------------
+
+Declared Django ``choices`` work for any registered scalar field, including
+``TextChoices``, ``IntegerChoices``, mappings, grouped options and callables.
+The builder offers a selector for equality (``exact`` and ``iexact``), showing
+the labels and submitting the stored codes. Text fragments and numeric/date
+ranges keep their free-value inputs. Equality values are checked on the server;
+changing the browser controls does not bypass validation. ``iexact`` accepts a
+case-insensitive match to a declared text code.
+
+Zero, false and explicitly declared empty-string choices remain valid values.
+Use ``isnull`` to query NULL; a ``None`` choice is not an equality value. Naive
+datetime choices and input use Django's active timezone. Grouped options are
+flattened into one selector. JavaScript adapts controls immediately; without
+JavaScript, entering a stored code still works and the edit form renders a selector.
+
+HTML results display declared labels. Unknown historical codes remain visible
+as their original values. Labels are plain text, including labels marked safe
+by host code. Filtering, ordering, pagination and CSV continue to use stored values.
+For example, HTML displays ``Open`` and CSV exports ``open``. Exported data does
+not depend on the language of a label or on later label changes.
+
+Choices are captured for authorized fields in each request's catalog. No option
+is inferred from database rows or cached across requests. Callable choices are
+application code: keep them inexpensive and suitable for every user who may
+see that field. QBE's configuration checks do not evaluate these callables.
+
 Pagination and ordering
 -----------------------
 

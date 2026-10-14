@@ -11,19 +11,29 @@
     const operator = row.querySelector('[name$="-operator"]');
     if (!operator) return;
     const current = row.querySelector('[name$="-value"]');
-    const isBoolean = operator.value === "isnull" || fields[path]?.boolean;
-    if (isBoolean === (current.tagName === "SELECT")) return;
-    const replacement = document.createElement(isBoolean ? "select" : "input");
+    const booleanOptions = [{value: "true", label: labels.true}, {value: "false", label: labels.false}];
+    let options = null;
+    if (operator.value === "isnull") {
+      options = booleanOptions;
+    } else if (["exact", "iexact"].includes(operator.value) && fields[path]?.choices_declared) {
+      options = fields[path].choices;
+    } else if (fields[path]?.boolean) {
+      options = booleanOptions;
+    }
+    const replacement = document.createElement(options !== null ? "select" : "input");
     for (const attribute of ["name", "id", "aria-describedby", "aria-invalid"]) {
       if (current.hasAttribute(attribute)) replacement.setAttribute(attribute, current.getAttribute(attribute));
     }
-    if (isBoolean) {
-      replacement.append(new Option(labels.choose, ""), new Option(labels.true, "true"), new Option(labels.false, "false"));
+    if (options !== null) {
+      if (!options.some(item => item.value === "")) replacement.append(new Option(labels.choose, ""));
+      replacement.append(...options.map(item => new Option(item.label, item.value)));
     } else {
       replacement.type = "text";
     }
     replacement.value = current.value;
+    const focused = document.activeElement === current;
     current.replaceWith(replacement);
+    if (focused) replacement.focus();
   }
 
   function wireRow(row) {

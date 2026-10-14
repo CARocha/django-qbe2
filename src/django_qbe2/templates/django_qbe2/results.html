@@ -6,6 +6,7 @@
   <div class="qbe-results-heading">
     <p>{% blocktranslate with count=page.total_limited %}{{ count }} matching rows{% endblocktranslate %}</p>
     {% if page.truncated %}<p class="qbe-warning" role="status">{% blocktranslate %}Results limited to {{ limit }} rows. Refine your conditions to narrow the report.{% endblocktranslate %}</p>{% endif %}
+    {% if not page.total_limited %}<p role="status">{% translate "Edit the report to adjust its conditions." %} {% translate "Your report's access policy also limits which rows you can see." %}</p>{% endif %}
   </div>
   <div class="module qbe-table-scroll" tabindex="0" role="region" aria-label="{% translate 'Report results table' %}">
     <table>

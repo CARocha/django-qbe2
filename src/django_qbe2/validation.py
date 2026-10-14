@@ -58,6 +58,15 @@ def typed_value(spec: FieldSpec, operator: str, raw: object) -> Scalar:
             MaxLengthValidator(field.max_length)(value)
     else:
         field.run_validators(value)
+    if spec.choices_declared and operator in ("exact", "iexact"):
+        permitted = any(
+            value.casefold() == choice.casefold()
+            if operator == "iexact"
+            else value == choice
+            for choice, _label in spec.choices
+        )
+        if not permitted:
+            raise ValidationError("Choose a listed value for this field.")
     return value
 
 

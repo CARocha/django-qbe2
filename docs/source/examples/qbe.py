@@ -15,7 +15,7 @@ class CustomerReport(Report):
 @register
 class OrderReport(Report):
     model = Order
-    fields = ("number", "customer__name", "total")
+    fields = ("number", "customer__name", "total", "status")
     field_labels = {"customer__name": "Customer", "total": "Total amount"}
 
     def get_queryset(self, request):
