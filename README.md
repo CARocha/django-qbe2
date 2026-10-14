@@ -5,8 +5,8 @@ Choose columns, add typed conditions, follow model relationships, preview pagina
 results and export a CSV. Supports **Python 3.13–3.14 and Django 6.0–6.1**.
 
 **Experimental alpha:** this is the initial implementation, not a production
-release or a drop-in replacement for the original package. The compatibility release
-candidate is `0.1.0a2`; check [PyPI](https://pypi.org/project/django-qbe2/) for its
+release or a drop-in replacement for the original package. The current release
+candidate is `0.1.0a3`; check [PyPI](https://pypi.org/project/django-qbe2/) for its
 availability. Inspired by [versae/qbe](https://github.com/versae/qbe), rebuilt around
 Django's ORM, explicit permissions and typed query definitions.
 
@@ -34,14 +34,14 @@ In your project's virtual environment, install the explicit alpha version after
 checking its availability on PyPI:
 
 ```sh
-python -m pip install django-qbe2==0.1.0a2
+python -m pip install django-qbe2==0.1.0a3
 ```
 
 To try the checkout before publication, build and install its wheel:
 
 ```sh
 uv build
-python -m pip install /absolute/path/to/dist/django_qbe2-0.1.0a2-py3-none-any.whl
+python -m pip install /absolute/path/to/dist/django_qbe2-0.1.0a3-py3-none-any.whl
 ```
 
 Add the app and mount its namespaced URLs alongside Django Admin:
@@ -85,7 +85,7 @@ class CustomerReport(Report):
 @register
 class OrderReport(Report):
     model = Order
-    fields = ("number", "customer__name", "total")
+    fields = ("number", "customer__name", "total", "status")
     field_labels = {"customer__name": "Customer", "total": "Total amount"}
 
     def get_queryset(self, request):
@@ -97,9 +97,15 @@ related model used. Staff status alone does not grant report access. Every repor
 must provide an explicit row policy; Django model permissions do not imply row
 authorization. The same policies apply to columns, filters, ordering, HTML and CSV.
 
+Django model `choices` require no QBE-specific configuration. Register the field,
+and equality filters offer its options automatically. The complete documentation
+example defines an Order status using `TextChoices`. Adapt the example's fields
+and ownership policy to your own models; `owner` is not a required field name.
+
 ## What is included
 
 - Text, integer, decimal, boolean, date, datetime and UUID fields.
+- Generic model-choice selectors and readable HTML labels; CSV keeps stored codes.
 - AND conditions, ascending/descending order and stable pagination.
 - One forward ForeignKey/OneToOne hop with related-row authorization.
 - Bounded CSV streaming, exact decimals, Unicode and safe text formula handling.

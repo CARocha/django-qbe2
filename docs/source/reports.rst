@@ -30,6 +30,20 @@ policy. Call an existing shared policy if your application already defines one.
 Superusers bypass model permission checks through Django's normal behavior but
 still follow the report's row policy. An explicit all-rows policy is your choice.
 
+For the example's owner-based model, an explicit policy can grant superusers all
+rows and scope other staff to their own rows:
+
+.. code-block:: python
+
+   def get_queryset(self, request):
+       queryset = self.model.objects.all()
+       if request.user.is_superuser:
+           return queryset
+       return queryset.filter(owner=request.user)
+
+Choose this policy only when your application authorizes that access. ``owner``
+is the example model's field; QBE does not require that name or infer ownership.
+
 The :doc:`installation` example uses owner equality. In a tenant application,
 return the tenant-scoped queryset your authenticated request is authorized to read.
 Never accept a client-provided tenant ID as authorization by itself.

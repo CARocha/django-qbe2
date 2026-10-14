@@ -13,6 +13,11 @@ commits before editing. Do not repeat completed work or overwrite another contri
   tests/ verifies the contract; docs/source/ contains the Sphinx sources.
 - The current app supports explicit registration, selected columns, typed AND
   filters, one forward FK/OneToOne hop, stable bounded pagination and CSV.
+- Declared model choices drive equality selectors and HTML labels. CSV, filters
+  and ordering retain stored codes. Only equality validates membership; fragments
+  and range thresholds may use values outside the choices. Preserve zero, false,
+  empty-string options, null distinction, historical codes and request-local labels.
+  Evaluate callable choices only for authorized catalog fields, never in checks.
 - Saved queries, aggregates, OR/NOT, ManyToMany, reverse relations, arbitrary SQL,
   visual diagrams, multiple databases and ASGI-native streaming need separate work.
 - Runtime dependency is Django only. Documentation tools belong to the docs group,

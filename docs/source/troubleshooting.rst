@@ -9,6 +9,25 @@ Check that your business app is in ``INSTALLED_APPS`` and that its ``qbe.py`` us
 For a related field, also grant the target model's view permission. An empty
 catalog is intentional until these requirements are met.
 
+The report is empty although Admin shows rows
+----------------------------------------------
+
+The report combines the visible conditions with ``get_queryset(request)``.
+Django Admin may use a different row policy. Remove conditions temporarily to
+distinguish the query from the report's access scope. A superuser still follows
+that scope; they do not automatically receive every row. See :doc:`reports`
+for an explicit superuser policy. Empty results do not disclose how many rows
+exist outside the user's scope.
+
+Preview returns a generic error
+-------------------------------
+
+Look for ``Report request failed (<ExceptionClass>).`` in your application's
+server logs. A ``FieldError`` can mean that ``get_queryset(request)`` refers to
+a nonexistent field. The installation example uses ``owner`` because its models
+have that field; adapt it to your model, such as ``user`` or a tenant relationship.
+Keep SQL, credentials and real query data out of public bug reports.
+
 A row disappears when I add a related column
 --------------------------------------------
 

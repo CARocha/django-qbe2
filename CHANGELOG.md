@@ -1,6 +1,26 @@
 # Changelog
 
-## 0.1.0a2 — release candidate
+## 0.1.0a3 — release candidate
+
+### Added
+
+- Generic equality selectors for declared Django model choices, including text,
+  numeric, boolean, grouped and callable options and permitted related fields.
+- Readable choice labels in HTML results; CSV continues to export stored codes.
+- Empty-result guidance explaining conditions and the report's row policy.
+- Installation examples for model choices and explicit superuser row policies.
+
+### Changed
+
+- Equality filters validate choice membership on the server. Existing queries
+  using undeclared codes need updating; fragment searches and range thresholds
+  retain their existing behavior. Unknown stored codes still display unchanged.
+- Editing retains selected options, including zero, false, integer-text aliases
+  and case-insensitive text codes. Date/time choices use the active timezone.
+
+Availability is confirmed by a successful publication workflow and index entry.
+
+## 0.1.0a2 — 2026-10-13
 
 ### Changed
 
@@ -14,7 +34,7 @@
 - Use exception syntax supported by Python 3.13; the original alpha failed to
   import its views on that interpreter. Ruff now preserves Python 3.13 syntax.
 
-Availability is confirmed by a successful publication workflow and index entry.
+Compatibility alpha published to TestPyPI and PyPI.
 
 ## 0.1.0a1 — 2026-10-13
 
