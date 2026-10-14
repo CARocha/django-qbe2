@@ -1,0 +1,9 @@
+{% extends "django_qbe2/saved_base.html" %}
+{% load i18n %}
+{% block content %}
+<div class="qbe-workspace">
+  <p>{% translate "Only you can change this query. Sharing does not grant permission to its report or data." %}</p>
+  <form method="post" class="module qbe-section qbe-saved-form">{% csrf_token %}{{ form.as_div }}<button type="submit">{% translate "Save name and sharing" %}</button></form>
+  <p><a href="{% url 'django_qbe2:saved_list' %}">{% translate "Cancel" %}</a></p>
+</div>
+{% endblock %}

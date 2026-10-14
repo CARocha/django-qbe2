@@ -1,0 +1,3 @@
+{% extends "django_qbe2/saved_base.html" %}
+{% load i18n %}
+{% block content %}<div class="qbe-workspace"><p role="alert">{% translate "This saved query is no longer valid for the available fields, values or limits. Build a new report or ask your developer to review its configuration." %}</p><p><a href="{% url 'django_qbe2:builder' %}">{% translate "Build a report" %}</a> · <a href="{% url 'django_qbe2:saved_list' %}">{% translate "Saved queries" %}</a></p></div>{% endblock %}

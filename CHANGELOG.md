@@ -1,6 +1,26 @@
 # Changelog
 
-## 0.1.0a3 — release candidate
+## 0.1.0a4 — release candidate
+
+### Added
+
+- Save named query definitions and page sizes, reopen them and explicitly update
+  or copy them without storing result rows.
+- Share definitions with named active staff users for reading and copying; only
+  the creator can modify the original, manage recipients or delete it.
+- Owner/recipient-scoped access, current-permission validation and bounded storage.
+- Package migrations with swappable user relationships, verified with UUID users
+  in a clean external consumer. Run `python manage.py migrate` after upgrading.
+- Public documentation for sharing, storage, privacy and future feature priorities.
+
+### Fixed
+
+- Enforce the configured page-size bound during form validation and saving,
+  rather than relying only on execution-time checks.
+
+Availability is confirmed by a successful publication workflow and index entry.
+
+## 0.1.0a3 — 2026-10-13
 
 ### Added
 
@@ -18,7 +38,7 @@
 - Editing retains selected options, including zero, false, integer-text aliases
   and case-insensitive text codes. Date/time choices use the active timezone.
 
-Availability is confirmed by a successful publication workflow and index entry.
+Generic choices alpha published to TestPyPI and PyPI.
 
 ## 0.1.0a2 — 2026-10-13
 

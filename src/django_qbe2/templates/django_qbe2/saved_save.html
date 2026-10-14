@@ -1,0 +1,13 @@
+{% extends "django_qbe2/saved_base.html" %}
+{% load i18n %}
+{% block content %}
+<div class="qbe-workspace">
+  {% if saved_query %}<p>{% translate "Updating a definition preserves its recipients." %} <a href="{% url 'django_qbe2:saved_settings' saved_query.pk %}">{% translate "Name and sharing" %}</a></p>{% endif %}
+  <div role="alert">{{ form.errors }}{{ form.filters.non_form_errors }}{{ form.ordering.non_form_errors }}</div>
+  <form method="post" class="module qbe-section qbe-saved-form">
+    {% csrf_token %}<input type="hidden" name="definition" value="{{ definition_json }}"><input type="hidden" name="page_size" value="{{ page_size }}">
+    {{ save_form.as_div }}<button type="submit">{% if saved_query %}{% translate "Update saved query" %}{% else %}{% translate "Save query" %}{% endif %}</button>
+  </form>
+  <form method="post" action="{% url 'django_qbe2:results' %}">{% csrf_token %}<input type="hidden" name="definition" value="{{ definition_json }}"><input type="hidden" name="page_size" value="{{ page_size }}">{% if saved_query %}<input type="hidden" name="saved_query" value="{{ saved_query.pk }}">{% endif %}<button name="action" value="edit">{% translate "Edit report" %}</button></form>
+</div>
+{% endblock %}

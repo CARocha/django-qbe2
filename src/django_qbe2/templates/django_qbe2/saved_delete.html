@@ -1,0 +1,9 @@
+{% extends "django_qbe2/saved_base.html" %}
+{% load i18n %}
+{% block content %}
+<div class="qbe-workspace">
+  <p>{% blocktranslate with name=saved_query.name %}Delete the saved query “{{ name }}”? Its recipients will lose access to this definition.{% endblocktranslate %}</p>
+  <form method="post">{% csrf_token %}<button type="submit">{% translate "Delete saved query" %}</button></form>
+  <p><a href="{% url 'django_qbe2:saved_list' %}">{% translate "Cancel" %}</a></p>
+</div>
+{% endblock %}

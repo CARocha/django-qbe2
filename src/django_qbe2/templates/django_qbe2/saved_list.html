@@ -1,0 +1,21 @@
+{% extends "django_qbe2/saved_base.html" %}
+{% load i18n %}
+{% block content %}
+<div class="qbe-workspace">
+  <p>{% translate "Your queries and queries shared with you. Each execution uses your current permissions and data access policy." %}</p>
+  <p><a href="{% url 'django_qbe2:builder' %}">{% translate "Build a report" %}</a></p>
+  {% for query in saved_page %}<section class="module qbe-section">
+    <h2>{{ query.name }}</h2>
+    <p>{% if query.owner_id == request.user.pk %}{% translate "Owned by you" %}{% else %}{% translate "Shared with you — read and copy" %}{% endif %}</p>
+    <div class="qbe-saved-actions">
+      <a href="{% url 'django_qbe2:saved_open' query.pk %}">{% translate "Open query" %}</a>
+      {% if query.owner_id == request.user.pk %}<a href="{% url 'django_qbe2:saved_settings' query.pk %}">{% translate "Name and sharing" %}</a><a href="{% url 'django_qbe2:saved_delete' query.pk %}">{% translate "Delete" %}</a>{% endif %}
+    </div>
+  </section>{% empty %}<p class="qbe-empty">{% translate "No saved queries yet. Preview a report and save its definition to reuse it." %}</p>{% endfor %}
+  {% if saved_page.has_other_pages %}<nav class="qbe-pagination" aria-label="{% translate 'Saved query pages' %}">
+    {% if saved_page.has_previous %}<a href="?page={{ saved_page.previous_page_number }}">{% translate "Previous page" %}</a>{% endif %}
+    <span>{% blocktranslate with current=saved_page.number total=saved_page.paginator.num_pages %}Page {{ current }} of {{ total }}{% endblocktranslate %}</span>
+    {% if saved_page.has_next %}<a href="?page={{ saved_page.next_page_number }}">{% translate "Next page" %}</a>{% endif %}
+  </nav>{% endif %}
+</div>
+{% endblock %}

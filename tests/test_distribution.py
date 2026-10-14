@@ -43,6 +43,8 @@ class DistributionTests(SimpleTestCase):
             for names in (wheel_names, source_names):
                 for asset in (
                     "templates/django_qbe2/builder.html",
+                    "templates/django_qbe2/saved_list.html",
+                    "migrations/0001_initial.py",
                     "static/django_qbe2/builder.js",
                 ):
                     self.assertTrue(any(name.endswith(asset) for name in names))
@@ -80,10 +82,19 @@ class DistributionTests(SimpleTestCase):
                 cwd=temporary,
             )
             run(str(python), "manage.py", "startapp", "sales", cwd=consumer)
+            run(str(python), "manage.py", "startapp", "accounts", cwd=consumer)
+            (consumer / "accounts/models.py").write_text(
+                "from uuid import uuid4\n"
+                "from django.contrib.auth.models import AbstractUser\n"
+                "from django.db import models\n\n"
+                "class User(AbstractUser):\n"
+                "    id = models.UUIDField(primary_key=True, default=uuid4)\n"
+            )
             settings_file = consumer / "consumer/settings.py"
             settings_file.write_text(
                 settings_file.read_text()
-                + '\nINSTALLED_APPS += ["sales", "django_qbe2"]\n'
+                + '\nINSTALLED_APPS += ["accounts", "sales", "django_qbe2"]\n'
+                + 'AUTH_USER_MODEL = "accounts.User"\n'
                 + 'ALLOWED_HOSTS = ["testserver"]\n'
             )
             for filename in ("models.py", "qbe.py"):
@@ -98,7 +109,14 @@ class DistributionTests(SimpleTestCase):
                 + 'urlpatterns.append(path("qbe/", include("django_qbe2.urls")))\n'
             )
             run(str(python), "manage.py", "check", cwd=consumer)
-            run(str(python), "manage.py", "makemigrations", "sales", cwd=consumer)
+            run(
+                str(python),
+                "manage.py",
+                "makemigrations",
+                "accounts",
+                "sales",
+                cwd=consumer,
+            )
             run(str(python), "manage.py", "migrate", "--noinput", cwd=consumer)
             output = run(
                 str(python),
@@ -124,11 +142,15 @@ html = get_template('django_qbe2/builder.html').render(
     {'has_reports': False, 'available_apps': [], 'title': 'Reports'}, request=request)
 assert 'No reports available' in html
 print('Clean consumer installation and render passed.')
-from django.contrib.auth.models import Permission, User
+from django.contrib.auth import get_user_model
+from django.contrib.auth.models import Permission
+from uuid import UUID
+User = get_user_model()
 from django.test import Client
 from sales.models import Customer, Order
 alice = User.objects.create_user('alice', is_staff=True)
 bob = User.objects.create_user('bob', is_staff=True)
+assert isinstance(alice.pk, UUID)
 alice.user_permissions.add(*Permission.objects.filter(
     content_type__app_label='sales', codename__in=['view_customer', 'view_order']))
 own_customer = Customer.objects.create(owner=alice, name='Alice customer')
@@ -160,6 +182,27 @@ rows = list(csv.reader(io.StringIO(b''.join(export.streaming_content).decode()))
 assert rows[1:] == [['A100', 'Alice customer', '100.01', 'open']], rows
 export.close()
 print('Documented consumer report policies, HTML and CSV passed.')
+from django_qbe2.models import SavedQuery
+saved = client.post('/qbe/saved/create/', {
+    **data, 'name': 'Shared order definition', 'shared_with': 'bob', 'page_size': '25'})
+assert saved.status_code == 302, saved.content
+query = SavedQuery.objects.get(owner=alice)
+assert query.definition == definition
+assert query.page_size == 25
+bob.user_permissions.add(*Permission.objects.filter(
+    content_type__app_label='sales', codename__in=['view_customer', 'view_order']))
+client.force_login(bob)
+assert client.get(f'/qbe/saved/{query.pk}/').status_code == 200
+result = client.post('/qbe/results/', {**data, 'saved_query': str(query.pk)})
+assert result.status_code == 200, result.content
+assert b'B200' in result.content and b'A100' not in result.content
+assert client.post(f'/qbe/saved/{query.pk}/update/', {
+    **data, 'name': 'Unauthorized overwrite'}).status_code == 404
+assert client.post('/qbe/saved/create/', {
+    **data, 'name': 'My copy'}).status_code == 302
+copy = SavedQuery.objects.get(owner=bob)
+assert copy.pk != query.pk and not copy.shared_with.exists()
+print('Custom-user migration, shared definitions, scoped execution and copy passed.')
 """,
                 cwd=consumer,
             )

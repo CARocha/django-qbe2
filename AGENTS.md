@@ -18,7 +18,14 @@ commits before editing. Do not repeat completed work or overwrite another contri
   and range thresholds may use values outside the choices. Preserve zero, false,
   empty-string options, null distinction, historical codes and request-local labels.
   Evaluate callable choices only for authorized catalog fields, never in checks.
-- Saved queries, aggregates, OR/NOT, ManyToMany, reverse relations, arbitrary SQL,
+- SavedQuery stores bounded JSON definitions and a page size, with swappable user
+  ownership and explicit reader/copy recipients. Owner-only modifications apply
+  even to superusers. Fresh catalog validation and executing-user row policies
+  remain mandatory. Never store result rows or grant model permissions by sharing.
+- Apply the package migration for saved queries; default database only. Preserve
+  UUID custom user support. Definition updates preserve recipients; the settings
+  route changes sharing explicitly. Public priorities live in docs/source/roadmap.rst.
+- Aggregates, OR/NOT, ManyToMany, reverse relations, arbitrary SQL,
   visual diagrams, multiple databases and ASGI-native streaming need separate work.
 - Runtime dependency is Django only. Documentation tools belong to the docs group,
   and test/lint tools belong to the dev group. Locked build/publishing tools belong
