@@ -287,6 +287,28 @@ class SavedQueryTests(TransactionTestCase):
         self.assertEqual(response.status_code, 302)
         self.assertEqual(list(query.shared_with.all()), [self.bob])
 
+    def test_failed_update_retry_cannot_misrepresent_sharing(self):
+        query = self.saved()
+        query.shared_with.add(self.bob)
+        self.client.force_login(self.alice)
+        failed = self.client.post(self.url("update", query), self.data(name=""))
+        self.assertEqual(failed.status_code, 400)
+        self.assertNotContains(failed, 'name="shared_with"', status_code=400)
+        self.assertNotContains(
+            failed, "Leave empty for a private query", status_code=400
+        )
+        self.assertContains(failed, self.url("settings", query), status_code=400)
+        corrected = self.client.post(self.url("update", query), self.data(name="Fixed"))
+        self.assertEqual(corrected.status_code, 302)
+        query.refresh_from_db()
+        self.assertEqual(query.name, "Fixed")
+        self.assertEqual(list(query.shared_with.all()), [self.bob])
+        rejected = self.client.post(
+            self.url("update", query), self.data(shared_with="")
+        )
+        self.assertEqual(rejected.status_code, 400)
+        self.assertEqual(list(query.shared_with.all()), [self.bob])
+
     def test_payload_size_limit_is_enforced_before_storage(self):
         self.client.force_login(self.alice)
         payload = order_payload(

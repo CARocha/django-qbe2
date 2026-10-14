@@ -19,7 +19,7 @@ from django_qbe2.saved import (
     create_saved_query,
     get_saved_query,
 )
-from django_qbe2.saved_forms import SavedQuerySettingsForm
+from django_qbe2.saved_forms import SavedQueryNameForm, SavedQuerySettingsForm
 from django_qbe2.views import builder_context, query_form, report_errors
 
 
@@ -120,7 +120,10 @@ def create_view(request):
 def update_view(request, pk):
     query = get_saved_query(request, pk, owner_only=True)
     form = query_form(request, get_catalog(request))
-    save_form = SavedQuerySettingsForm(request.POST, owner=request.user)
+    save_form = SavedQueryNameForm(request.POST)
+    save_form.is_valid()
+    if "shared_with" in request.POST:
+        save_form.add_error(None, _("Use Name and sharing to change recipients."))
     if form.is_valid() and save_form.is_valid():
         try:
             check_definition_size(form.payload)
