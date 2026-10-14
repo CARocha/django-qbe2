@@ -9,7 +9,7 @@
   <p class="qbe-intro">{% translate "Choose the data you need. Add conditions, preview results, and export your report." %}</p>
   <p id="qbe-feedback" class="visually-hidden" role="status" aria-live="polite"></p>
   {% if has_reports %}
-  <form method="get" class="qbe-report-picker">
+  <form method="get" action="{% url 'django_qbe2:builder' %}" class="qbe-report-picker">
     {{ form.report.as_field_group }}
     <button type="submit" class="button">{% translate "Choose report" %}</button>
   </form>

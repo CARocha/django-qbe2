@@ -57,6 +57,10 @@ class SavedQueryTests(TransactionTestCase):
         self.assertEqual(opened.status_code, 200)
         self.assertEqual(opened.context["form"].payload, payload)
         self.assertContains(opened, f'name="saved_query" value="{query.pk}"')
+        self.assertContains(
+            opened,
+            f'<form method="get" action="{reverse("django_qbe2:builder")}"',
+        )
 
     def test_owner_updates_definition_explicitly_and_preview_does_not_save(self):
         query = self.saved()

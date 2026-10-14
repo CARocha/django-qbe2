@@ -31,6 +31,9 @@ booleans are rejected. ``QBE2_PAGE_SIZE`` cannot exceed ``QBE2_MAX_PAGE_SIZE``.
    * - ``QBE2_MAX_ROWS``
      - 10,000
      - Maximum report/export rows
+   * - ``QBE2_MAX_SAVED_QUERIES``
+     - 100
+     - Maximum stored definitions per owner, including copies
 
 PostgreSQL report statements run with a 5-second statement timeout and restore the
 previous connection setting. This timeout is currently an internal constant, not a
@@ -57,11 +60,32 @@ Mount ``django_qbe2.urls`` under a prefix of your choice. The route names remain
    * - ``django_qbe2:export``
      - POST
      - Validate and download bounded CSV
+   * - ``django_qbe2:saved_list``
+     - GET
+     - Paginated owned/accessible shared definitions
+   * - ``django_qbe2:saved_open``
+     - GET
+     - Revalidate a saved definition and open the builder
+   * - ``django_qbe2:saved_create``
+     - POST
+     - Save a validated definition or a new copy
+   * - ``django_qbe2:saved_update``
+     - POST
+     - Owner-only definition update
+   * - ``django_qbe2:saved_settings``
+     - GET, POST
+     - Owner-only name and recipient management
+   * - ``django_qbe2:saved_delete``
+     - GET, POST
+     - Owner-only confirmation and deletion
 
 Results and export require Django CSRF protection. The builder accepts a ``report``
 query parameter using the model's ``app_label.model_name`` identifier. The other
-routes accept a ``definition`` JSON form field; result pagination also carries
+report routes accept a ``definition`` JSON form field; result pagination also carries
 ``page`` and ``page_size``. There is no standalone JSON REST endpoint.
+Saved-object routes use a UUID ``pk``. All mutations require CSRF. Results opened
+from a saved definition carry ``saved_query`` through editing and pagination;
+its identifier never grants access by itself. See :doc:`saved_queries`.
 
 Authentication and errors
 -------------------------

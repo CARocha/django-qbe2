@@ -13,12 +13,12 @@ Sphinx, Ruff and database test drivers are development tools.
 Install the alpha
 -----------------
 
-The current alpha candidate is ``0.1.0a3``. Check its availability on PyPI before
+The current alpha candidate is ``0.1.0a4``. Check its availability on PyPI before
 installing it in your host project's virtual environment:
 
 .. code-block:: console
 
-   python -m pip install django-qbe2==0.1.0a3
+   python -m pip install django-qbe2==0.1.0a4
 
 The explicit version opts into the alpha. You do not need to upgrade a host project
 from Django 6.0 to 6.1 to use this release. Version 0.1.0a1 supported only Python
@@ -34,7 +34,7 @@ In your host project's environment, install that wheel using its absolute path:
 
 .. code-block:: console
 
-   python -m pip install /absolute/path/to/django-qbe2/dist/django_qbe2-0.1.0a3-py3-none-any.whl
+   python -m pip install /absolute/path/to/django-qbe2/dist/django_qbe2-0.1.0a4-py3-none-any.whl
 
 The distribution name is ``django-qbe2``; the import and app name is
 ``django_qbe2``. The wheel contains namespaced templates and static assets. It
@@ -64,8 +64,10 @@ processors used by Django Admin. The initial implementation uses the default
 ``admin.site`` for its login and context; it does not automatically adopt a custom
 AdminSite.
 
-The QBE app itself has no database models or migrations. Your host project's auth,
-sessions and business apps still need their normal migrations. In production,
+From the ``0.1.0a4`` candidate, QBE includes migrations for saved queries and their
+recipient relationships, using your ``AUTH_USER_MODEL``. Apply them with
+``manage.py migrate`` when upgrading; earlier alphas have no QBE tables.
+Your host project's auth, sessions and business apps still need their normal migrations. In production,
 serve the packaged static files through your existing Django static-file setup:
 
 .. code-block:: console
@@ -101,7 +103,8 @@ Read :doc:`reports` for the policy contract before adapting this example.
 
    These exact model and report files are installed into a temporary external
    Django consumer by the package test suite. The test checks the wheel outside
-   the checkout and verifies report HTML and CSV do not expose another owner's data.
+   the checkout with a UUID custom user, applies migrations, and verifies report
+   HTML/CSV and shared saved queries preserve the executing user's row policy.
 
 Run ``manage.py check`` after changing report configuration. Invalid field paths,
 unsupported relations and missing target registrations are reported by system checks.

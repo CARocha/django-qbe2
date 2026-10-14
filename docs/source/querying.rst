@@ -128,4 +128,5 @@ is an HTTP form contract, not a REST API or an authorization token:
 All five keys are required. Empty filters and ordering arrays are valid. Columns
 must be nonempty and distinct; ordering fields must be distinct. Extra keys,
 unknown versions, paths, operators and invalid values are rejected. Result rows
-are never stored in the session. No saved-query model exists in this version.
+are never stored in the session. Explicitly saved definitions are separate
+database records; see :doc:`saved_queries`. No result rows are stored.

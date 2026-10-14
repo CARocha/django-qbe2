@@ -7,7 +7,7 @@ Django 6.0–6.1**, inspired by `versae/qbe <https://github.com/versae/qbe>`_.
 
 .. warning::
 
-   This is an experimental alpha. Check PyPI for the ``0.1.0a3`` candidate's
+   This is an experimental alpha. Check PyPI for the ``0.1.0a4`` candidate's
    availability, or use the checkout/a locally built wheel. The public
    configuration API may change before a stable release.
 
@@ -23,6 +23,7 @@ Django model permissions and each report's row policy are both required.
    installation
    reports
    querying
+   saved_queries
    configuration
    troubleshooting
 
@@ -33,6 +34,7 @@ Django model permissions and each report's row policy are both required.
    api
    contributing
    releases
+   roadmap
 
 Sources are plain reStructuredText under ``docs/source/``. Developers and agents
 can read them directly from the repository without running the demo. Sphinx also
