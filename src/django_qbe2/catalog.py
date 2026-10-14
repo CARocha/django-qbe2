@@ -1,11 +1,13 @@
 """Validate explicit field paths and build a fresh catalog for each request."""
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 
 from django.core.exceptions import FieldDoesNotExist, ImproperlyConfigured
 from django.db import models
 from django.http import HttpRequest
 
+from django_qbe2.choices import field_choices
+from django_qbe2.definitions import Scalar
 from django_qbe2.registry import Report, get_reports
 
 TEXT_OPERATORS = (
@@ -34,6 +36,8 @@ class FieldSpec:
     relation_name: str | None = None
     target_report_id: str | None = None
     target_key: str | None = None
+    choices: tuple[tuple[Scalar, str], ...] = ()
+    choices_declared: bool = False
 
 
 @dataclass(frozen=True)
@@ -137,7 +141,11 @@ def get_catalog(request: HttpRequest) -> dict[str, ReportSpec]:
     for key in visible_ids:
         spec = describe_report(reports[key], reports)
         fields = {
-            path: field
+            path: replace(
+                field,
+                choices=field_choices(field.django_field),
+                choices_declared=field.django_field.choices is not None,
+            )
             for path, field in spec.fields.items()
             if field.target_report_id is None or field.target_report_id in visible_ids
         }

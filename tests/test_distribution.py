@@ -144,7 +144,7 @@ client.force_login(alice)
 assert client.get('/qbe/?report=sales.order').status_code == 200
 definition = {
     'version': 1, 'report': 'sales.order',
-    'columns': ['number', 'customer__name', 'total'],
+    'columns': ['number', 'customer__name', 'total', 'status'],
     'filters': [{'field': 'total', 'operator': 'gte', 'value': '100.00'}],
     'ordering': [{'field': 'number', 'direction': 'asc'}],
 }
@@ -153,10 +153,11 @@ result = client.post('/qbe/results/', data)
 assert result.status_code == 200, result.content
 assert b'A100' in result.content and b'Alice customer' in result.content
 assert b'Hidden' not in result.content and b'Bob customer' not in result.content
+assert b'>Open</td>' in result.content
 export = client.post('/qbe/export/', data)
 assert export.status_code == 200
 rows = list(csv.reader(io.StringIO(b''.join(export.streaming_content).decode())))
-assert rows[1:] == [['A100', 'Alice customer', '100.01']], rows
+assert rows[1:] == [['A100', 'Alice customer', '100.01', 'open']], rows
 export.close()
 print('Documented consumer report policies, HTML and CSV passed.')
 """,

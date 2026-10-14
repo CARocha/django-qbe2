@@ -7,11 +7,13 @@ from django.core.exceptions import PermissionDenied, ValidationError
 from django.db import models
 from django.http import Http404, HttpRequest, HttpResponse
 from django.shortcuts import render
+from django.utils.html import escape
 from django.utils.translation import gettext as _
 from django.views.decorators.http import require_GET, require_POST
 
 from django_qbe2.access import require_qbe_access
 from django_qbe2.catalog import get_catalog
+from django_qbe2.choices import choice_value
 from django_qbe2.engine import build_queryset
 from django_qbe2.execution import get_page
 from django_qbe2.exports import csv_response
@@ -55,6 +57,11 @@ def builder_context(request, catalog, form):
                     for operator in field.operators
                 ],
                 "boolean": isinstance(field.django_field, models.BooleanField),
+                "choices": [
+                    {"value": choice_value(value), "label": label}
+                    for value, label in field.choices
+                ],
+                "choices_declared": field.choices_declared,
             }
             for path, field in fields.items()
         },
@@ -150,6 +157,13 @@ def results_view(request: HttpRequest):
             builder_context(request, catalog, form),
             status=400,
         )
+    choice_labels = {
+        path: {
+            value: escape(label)
+            for value, label in catalog[form.definition.report].fields[path].choices
+        }
+        for path in form.definition.columns
+    }
     context = {
         **admin.site.each_context(request),
         "title": _("Report results"),
@@ -158,7 +172,11 @@ def results_view(request: HttpRequest):
         "definition_json": json.dumps(form.payload),
         "limit": get_limits().max_rows,
         "table_rows": [
-            tuple(row[path] for path in form.definition.columns) for row in page.rows
+            tuple(
+                choice_labels[path].get(row[path], row[path])
+                for path in form.definition.columns
+            )
+            for row in page.rows
         ],
         "previous_page": page.page - 1,
         "next_page": page.page + 1,

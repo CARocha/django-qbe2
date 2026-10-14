@@ -23,7 +23,7 @@
     </section>
     <section class="module qbe-section">
       <h2>{% translate "2. Conditions" %}</h2>
-      <p>{% translate "All conditions must match. For boolean values, use true or false." %}</p>
+      <p>{% translate "All conditions must match. Choose a listed value when options are available. For boolean values, use true or false." %}</p>
       {{ form.filters.management_form }}{{ form.filters.non_form_errors }}
       <div id="filter-rows">{% for row in form.filters %}<div class="qbe-row">{{ row.as_div }}</div>{% endfor %}</div>
       <button type="button" class="button qbe-add-row" data-prefix="filters" data-added-message="{% translate 'Condition added' %}" hidden>{% translate "Add condition" %}</button>
