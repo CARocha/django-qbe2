@@ -10,7 +10,7 @@ prove publication; verify the corresponding PyPI/TestPyPI index entry and the
 successful Publish workflow. Version metadata has one source: ``pyproject.toml``.
 
 The MVP includes report registration, explicit row policies, related-row checks,
-typed AND conditions, stable bounded pages, safe CSV and a synthetic demo.
+typed AND/OR/NOT groups, stable bounded pages, safe CSV and a synthetic demo.
 Saved definitions support explicit reader/copy sharing. Aggregates and
 visual diagrams need later scoped plans; see :doc:`roadmap`.
 See :download:`CHANGELOG.md <../../CHANGELOG.md>` for consumer-facing changes.

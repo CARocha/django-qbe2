@@ -103,18 +103,19 @@ and equality filters offer its options automatically. The complete documentation
 example defines an Order status using `TextChoices`. Adapt the example's fields
 and ownership policy to your own models; `owner` is not a required field name.
 
-For saved queries in the `0.1.0a4` candidate, run `python manage.py migrate` after
+For saved queries introduced in `0.1.0a4`, run `python manage.py migrate` after
 upgrading. Preview a report to save its definition, then use **Saved queries** to
 reopen it or manage named recipients. Sharing never grants model permissions or
 access to the creator's rows. See the [saved-query guide](docs/source/saved_queries.rst)
-and [roadmap](docs/source/roadmap.rst).
+and [roadmap](docs/source/roadmap.rst). Condition groups preserve existing saved
+definitions and require no additional migration.
 
 ## What is included
 
 - Text, integer, decimal, boolean, date, datetime and UUID fields.
 - Generic model-choice selectors and readable HTML labels; CSV keeps stored codes.
 - Saved definitions, private by default, with explicit reader/copy sharing.
-- AND conditions, ascending/descending order and stable pagination.
+- Bounded nested AND/OR/NOT groups, ascending/descending order and stable pagination.
 - One forward ForeignKey/OneToOne hop with related-row authorization.
 - Bounded CSV streaming, exact decimals, Unicode and safe text formula handling.
 - Django Admin styling, light/dark modes and responsive, keyboard-accessible controls.
