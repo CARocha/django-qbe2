@@ -1,6 +1,16 @@
 # Changelog
 
-## 0.1.0a4 — release candidate
+## 0.1.0a5 — release candidate
+
+### Added
+
+- Django Admin app-list/sidebar navigation to saved queries, using the same
+  ownership and sharing rules. The entry does not expose raw model editing.
+- Navigation respects consumer-defined Admin and QBE URL prefixes.
+
+Availability is confirmed by a successful publication workflow and index entry.
+
+## 0.1.0a4 — 2026-10-14
 
 ### Added
 

@@ -25,6 +25,9 @@ commits before editing. Do not repeat completed work or overwrite another contri
 - Apply the package migration for saved queries; default database only. Preserve
   UUID custom user support. Definition updates preserve recipients; the settings
   route changes sharing explicitly. Public priorities live in docs/source/roadmap.rst.
+- Default Admin registers SavedQuery only as navigation to the authorized QBE
+  list. Never expose raw add/change/delete/history model routes or JSON editing;
+  adding navigation must not bypass ownership or sharing policies.
 - Aggregates, OR/NOT, ManyToMany, reverse relations, arbitrary SQL,
   visual diagrams, multiple databases and ASGI-native streaming need separate work.
 - Runtime dependency is Django only. Documentation tools belong to the docs group,

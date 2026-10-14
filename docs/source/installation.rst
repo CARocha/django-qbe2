@@ -13,12 +13,12 @@ Sphinx, Ruff and database test drivers are development tools.
 Install the alpha
 -----------------
 
-The current alpha candidate is ``0.1.0a4``. Check its availability on PyPI before
+The current alpha candidate is ``0.1.0a5``. Check its availability on PyPI before
 installing it in your host project's virtual environment:
 
 .. code-block:: console
 
-   python -m pip install django-qbe2==0.1.0a4
+   python -m pip install django-qbe2==0.1.0a5
 
 The explicit version opts into the alpha. You do not need to upgrade a host project
 from Django 6.0 to 6.1 to use this release. Version 0.1.0a1 supported only Python
@@ -34,7 +34,7 @@ In your host project's environment, install that wheel using its absolute path:
 
 .. code-block:: console
 
-   python -m pip install /absolute/path/to/django-qbe2/dist/django_qbe2-0.1.0a4-py3-none-any.whl
+   python -m pip install /absolute/path/to/django-qbe2/dist/django_qbe2-0.1.0a5-py3-none-any.whl
 
 The distribution name is ``django-qbe2``; the import and app name is
 ``django_qbe2``. The wheel contains namespaced templates and static assets. It
