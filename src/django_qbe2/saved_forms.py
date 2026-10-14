@@ -3,8 +3,11 @@ from django.contrib.auth import get_user_model
 from django.utils.translation import gettext_lazy as _
 
 
-class SavedQuerySettingsForm(forms.Form):
+class SavedQueryNameForm(forms.Form):
     name = forms.CharField(label=_("Name"), max_length=120)
+
+
+class SavedQuerySettingsForm(SavedQueryNameForm):
     shared_with = forms.CharField(
         label=_("Share with"),
         required=False,

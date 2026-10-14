@@ -3,6 +3,7 @@
 {% block breadcrumbs %}<div class="breadcrumbs"><a href="{% url 'admin:index' %}">{% translate "Home" %}</a> &rsaquo; <a href="{% url 'django_qbe2:builder' %}">{% translate "Reports" %}</a> &rsaquo; {% translate "Results" %}</div>{% endblock %}
 {% block content %}
 <div class="qbe-workspace">
+  <p><a href="{% url 'django_qbe2:saved_list' %}">{% translate "Saved queries" %}</a></p>
   <div class="qbe-results-heading">
     <p>{% blocktranslate with count=page.total_limited %}{{ count }} matching rows{% endblocktranslate %}</p>
     {% if page.truncated %}<p class="qbe-warning" role="status">{% blocktranslate %}Results limited to {{ limit }} rows. Refine your conditions to narrow the report.{% endblocktranslate %}</p>{% endif %}
@@ -19,6 +20,7 @@
     {% csrf_token %}
     <input type="hidden" name="definition" value="{{ definition_json }}">
     <input type="hidden" name="page_size" value="{{ page.page_size }}">
+    {% if saved_query %}<input type="hidden" name="saved_query" value="{{ saved_query.pk }}">{% endif %}
     {% if page.page > 1 %}<button type="submit" name="page" value="{{ previous_page }}">{% translate "Previous page" %}</button>{% endif %}
     <span>{% blocktranslate with current=page.page total=page.num_pages %}Page {{ current }} of {{ total }}{% endblocktranslate %}</span>
     {% if page.page < page.num_pages %}<button type="submit" name="page" value="{{ next_page }}">{% translate "Next page" %}</button>{% endif %}
@@ -30,5 +32,16 @@
     <button type="submit" class="button default">{% translate "Export CSV" %}</button>
     <p class="help">{% blocktranslate %}Exports all matching rows, up to {{ limit }} rows, in the same order.{% endblocktranslate %}</p>
   </form>{% endif %}
+  <section class="module qbe-section qbe-save-section">
+    <h2>{% translate "Save query" %}</h2>
+    <p>{% translate "Save columns, conditions and ordering, without storing result rows. New queries are private until you share them." %}</p>
+    <form method="post" action="{% url 'django_qbe2:saved_create' %}">
+      {% csrf_token %}<input type="hidden" name="definition" value="{{ definition_json }}"><input type="hidden" name="page_size" value="{{ page.page_size }}">
+      {{ save_form.as_div }}
+      {% if owns_saved_query %}<button type="submit" formaction="{% url 'django_qbe2:saved_update' saved_query.pk %}">{% translate "Update saved query" %}</button>{% endif %}
+      <button type="submit">{% if saved_query %}{% translate "Save a copy" %}{% else %}{% translate "Save query" %}{% endif %}</button>
+    </form>
+    {% if owns_saved_query %}<p><a href="{% url 'django_qbe2:saved_settings' saved_query.pk %}">{% translate "Name and sharing" %}</a></p>{% endif %}
+  </section>
 </div>
 {% endblock %}

@@ -144,7 +144,9 @@ class QueryBuilderForm(forms.Form):
         self.fields["columns"].choices = [
             (path, field.label) for path, field in fields.items()
         ]
-        self.fields["page_size"].max_value = limits.max_page_size
+        self.fields["page_size"] = forms.IntegerField(
+            label=_("Rows per page"), min_value=1, max_value=limits.max_page_size
+        )
         self.filters = formset_factory(
             FilterForm,
             extra=1,

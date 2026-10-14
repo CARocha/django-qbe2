@@ -19,6 +19,8 @@ from django_qbe2.execution import get_page
 from django_qbe2.exports import csv_response
 from django_qbe2.forms import OPERATOR_LABELS, QueryBuilderForm, payload_form_data
 from django_qbe2.limits import get_limits
+from django_qbe2.saved import get_saved_query
+from django_qbe2.saved_forms import SavedQueryNameForm
 from django_qbe2.validation import validate_definition
 
 logger = logging.getLogger(__name__)
@@ -87,12 +89,13 @@ def builder_view(request: HttpRequest):
     )
 
 
-def query_form(request, catalog):
+def query_form(request, catalog, data=None):
     original = None
-    data = request.POST
-    if "definition" in request.POST:
+    data = request.POST if data is None else data
+    source = data
+    if "definition" in source:
         try:
-            original = json.loads(request.POST["definition"])
+            original = json.loads(source["definition"])
         except (json.JSONDecodeError, ValueError):
             form = QueryBuilderForm(data, catalog=catalog)
             form.is_valid()
@@ -100,7 +103,7 @@ def query_form(request, catalog):
             return form
         data = payload_form_data(
             original,
-            page_size=request.POST.get("page_size", str(get_limits().page_size)),
+            page_size=source.get("page_size", str(get_limits().page_size)),
         )
     report_id = data.get("report")
     if report_id and report_id not in catalog:
@@ -125,13 +128,21 @@ def query_form(request, catalog):
 @report_errors
 def results_view(request: HttpRequest):
     catalog = get_catalog(request)
+    saved_query = None
+    if request.POST.get("saved_query"):
+        saved_query = get_saved_query(request, request.POST["saved_query"])
+        if (
+            saved_query.owner_id != request.user.pk
+            and saved_query.definition.get("report") not in catalog
+        ):
+            raise Http404("Report not available.")
     form = query_form(request, catalog)
     if not form.is_valid() or request.POST.get("action") == "edit":
         status = 200 if form.is_valid() else 400
         return render(
             request,
             "django_qbe2/builder.html",
-            builder_context(request, catalog, form),
+            {**builder_context(request, catalog, form), "saved_query": saved_query},
             status=status,
         )
     try:
@@ -154,7 +165,7 @@ def results_view(request: HttpRequest):
         return render(
             request,
             "django_qbe2/builder.html",
-            builder_context(request, catalog, form),
+            {**builder_context(request, catalog, form), "saved_query": saved_query},
             status=400,
         )
     choice_labels = {
@@ -168,6 +179,12 @@ def results_view(request: HttpRequest):
         **admin.site.each_context(request),
         "title": _("Report results"),
         "site_header": _("Django QBE 2"),
+        "saved_query": saved_query,
+        "owns_saved_query": saved_query is not None
+        and saved_query.owner_id == request.user.pk,
+        "save_form": SavedQueryNameForm(
+            initial={"name": saved_query.name if saved_query else ""}
+        ),
         "page": page,
         "definition_json": json.dumps(form.payload),
         "limit": get_limits().max_rows,
