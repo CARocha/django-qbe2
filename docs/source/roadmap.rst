@@ -1,5 +1,5 @@
-Roadmap
-=======
+Feature roadmap
+===============
 
 The package evolves as a reusable Django application. Features must work with
 registered models, custom users and consumer-defined row policies. No feature
