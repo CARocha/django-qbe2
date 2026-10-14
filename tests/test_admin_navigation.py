@@ -25,14 +25,16 @@ class AdminNavigationTests(TestCase):
         response = self.client.get(reverse("admin:django_qbe2_savedquery_changelist"))
         self.assertRedirects(response, reverse("django_qbe2:saved_list"))
 
-    def test_admin_does_not_offer_raw_storage_mutations(self):
+    def test_admin_does_not_offer_raw_storage_routes(self):
         self.assertTrue(admin.site.is_registered(SavedQuery))
         for suffix in (
             "add/",
             "00000000-0000-0000-0000-000000000001/change/",
             "00000000-0000-0000-0000-000000000001/delete/",
+            "00000000-0000-0000-0000-000000000001/history/",
         ):
-            response = self.client.get("/admin/django_qbe2/savedquery/" + suffix)
+            base = reverse("admin:django_qbe2_savedquery_changelist")
+            response = self.client.get(base + suffix)
             self.assertEqual(response.status_code, 404)
 
     def test_admin_entry_keeps_private_queries_private_for_superusers(self):
