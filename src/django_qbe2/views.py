@@ -27,7 +27,7 @@ def report_errors(view):
     def wrapped(request, *args, **kwargs):
         try:
             return view(request, *args, **kwargs)
-        except Http404, PermissionDenied:
+        except (Http404, PermissionDenied):
             raise
         except Exception as error:
             # The HTTP boundary hides database details, even when DEBUG is enabled.
@@ -86,7 +86,7 @@ def query_form(request, catalog):
     if "definition" in request.POST:
         try:
             original = json.loads(request.POST["definition"])
-        except json.JSONDecodeError, ValueError:
+        except (json.JSONDecodeError, ValueError):
             form = QueryBuilderForm(data, catalog=catalog)
             form.is_valid()
             form.add_error(None, _("Invalid query definition."))

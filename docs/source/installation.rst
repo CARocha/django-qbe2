@@ -4,17 +4,27 @@ Install in your project
 Requirements
 ------------
 
-The initial supported environment is Python 3.14 and Django 6.1. SQLite and
-PostgreSQL are exercised by the test suite. Other Django/database versions are not
-part of the current compatibility promise. Django is the only runtime dependency;
+Supported environments are Python 3.13 and 3.14 with Django 6.0 and 6.1. Every
+combination is exercised on SQLite and PostgreSQL. Use the latest patch release
+of your Python and Django series. Other versions and databases are not part of
+the current compatibility promise. Django is the only runtime dependency;
 Sphinx, Ruff and database test drivers are development tools.
 
-Build and install a wheel
--------------------------
+Install the alpha
+-----------------
 
-The first alpha candidate is ``0.1.0a1``. Check its availability on PyPI before
-using ``python -m pip install django-qbe2==0.1.0a1``. From the source checkout,
-you can always build and install a local wheel:
+The compatibility alpha candidate is ``0.1.0a2``. Check its availability on PyPI before
+installing it in your host project's virtual environment:
+
+.. code-block:: console
+
+   python -m pip install django-qbe2==0.1.0a2
+
+The explicit version opts into the alpha. You do not need to upgrade a host project
+from Django 6.0 to 6.1 to use this release. Version 0.1.0a1 supported only Python
+3.14/Django 6.1; Python 3.13/Django 6.0 consumers need 0.1.0a2 or later.
+
+From the source checkout, you can always build and install a local wheel:
 
 .. code-block:: console
 
@@ -24,7 +34,7 @@ In your host project's environment, install that wheel using its absolute path:
 
 .. code-block:: console
 
-   python -m pip install /absolute/path/to/django-qbe2/dist/django_qbe2-0.1.0a1-py3-none-any.whl
+   python -m pip install /absolute/path/to/django-qbe2/dist/django_qbe2-0.1.0a2-py3-none-any.whl
 
 The distribution name is ``django-qbe2``; the import and app name is
 ``django_qbe2``. The wheel contains namespaced templates and static assets. It

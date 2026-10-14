@@ -26,6 +26,24 @@ documented model/report examples, and verifies authorized HTML and CSV. Keep tho
 examples aligned with the app contract. The wheel/sdist omit the demo, test data,
 local credentials and development tools.
 
+Compatibility matrix
+--------------------
+
+CI runs Python 3.13 and 3.14 with Django 6.0 and 6.1 on both databases. The frozen
+lock is the default development/build environment, not a replacement for the
+matrix. Use ``--with`` to select another Django series without rewriting the lock:
+
+.. code-block:: console
+
+   uv run --frozen --python 3.13 --group dev --with 'Django==6.0.*' python -m django test tests --settings=tests.settings -v 2
+   uv run --frozen --python 3.13 --group dev --with 'Django==6.0.*' python demo/manage.py test demo.reports -v 2
+
+Repeat both commands for Python 3.13/Django 6.1, Python 3.14/Django 6.0 and
+Python 3.14/Django 6.1 to cover the remaining three combinations. The external
+wheel consumer uses the same interpreter and Django patch version as each test
+runner. Release verification also installs from each index in all four runtimes.
+Keep Ruff's target at Python 3.13 so generated formatting remains importable there.
+
 PostgreSQL tests
 ----------------
 

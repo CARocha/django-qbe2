@@ -4,7 +4,7 @@ Release status and publication
 Current status
 --------------
 
-The initial alpha candidate is ``0.1.0a1``. It is experimental: its configuration
+The compatibility alpha candidate is ``0.1.0a2``. It is experimental: its configuration
 API may change before a stable release. A metadata version or Git tag does not
 prove publication; verify the corresponding PyPI/TestPyPI index entry and the
 successful Publish workflow. Version metadata has one source: ``pyproject.toml``.
@@ -58,10 +58,10 @@ Publish to TestPyPI first
 
 #. Review and integrate the release branch into ``main``. The metadata version,
    changelog and installation examples must agree.
-#. Run the app/demo tests on both supported databases, strict documentation builds,
+#. Run the app/demo tests across all four Python/Django combinations on both databases, strict documentation builds,
    lint/format and the native dependency audit. Locked build/publishing dependencies
    live in the ``release`` group, outside the runtime requirements.
-#. Create the annotated tag ``v0.1.0a1`` at the verified main commit and push only
+#. Create the annotated tag ``v0.1.0a2`` at the verified main commit and push only
    main and that tag. Personal/archived branches must remain local.
 #. In GitHub Actions, select **Publish** > Run workflow. Select the release tag,
    choose destination ``testpypi`` and leave source_run_id empty.
@@ -90,7 +90,8 @@ Promote the verified files to PyPI
    Their bytes must still match TestPyPI's published hashes. Metadata is rechecked.
 #. Approve the waiting ``pypi`` environment deployment. The isolated upload job
    publishes those exact files using PyPI Trusted Publishing.
-#. The last job checks PyPI's hashes and performs a new external consumer install.
+#. The last job checks PyPI's hashes and performs external consumer installs in all
+   four supported Python/Django combinations.
    Confirm the public project/version page before announcing availability.
 
 If a post-upload verification fails, inspect the error and repair the release
