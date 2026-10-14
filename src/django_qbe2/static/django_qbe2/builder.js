@@ -57,6 +57,31 @@
   }
 
   document.querySelectorAll("#filter-rows .qbe-row, #ordering-rows .qbe-row").forEach(wireRow);
+  const groupElements = [...document.querySelectorAll(".qbe-condition-group")];
+  const groupMap = new Map(groupElements.map(element => [element.dataset.group, element]));
+  groupElements.forEach(element => {
+    const controls = element.querySelector(":scope > .qbe-group-controls");
+    const parent = controls?.querySelector('[name$="-parent"]');
+    parent?.addEventListener("change", () => {
+      const target = groupMap.get(parent.value);
+      if (target && target !== element && !element.contains(target)) {
+        target.querySelector(":scope > .qbe-group-children").append(element);
+        parent.focus();
+      }
+    });
+    const remove = controls?.querySelector('input[type="checkbox"][name$="-DELETE"]');
+    remove?.addEventListener("change", () => element.classList.toggle("qbe-row-deleted", remove.checked));
+  });
+  document.querySelectorAll(".qbe-filter-row").forEach(row => {
+    const group = row.querySelector('[name$="-group"]');
+    group?.addEventListener("change", () => {
+      const target = groupMap.get(group.value);
+      if (target) {
+        target.querySelector(":scope > .qbe-group-filters").append(row);
+        group.focus();
+      }
+    });
+  });
   document.querySelectorAll(".qbe-add-row").forEach(button => {
     const prefix = button.dataset.prefix;
     const total = document.getElementById(`id_${prefix}-TOTAL_FORMS`);

@@ -18,6 +18,7 @@ from django_qbe2.engine import build_queryset
 from django_qbe2.execution import get_page
 from django_qbe2.exports import csv_response
 from django_qbe2.forms import OPERATOR_LABELS, QueryBuilderForm, payload_form_data
+from django_qbe2.group_forms import default_group_data, validate_structure
 from django_qbe2.limits import get_limits
 from django_qbe2.saved import get_saved_query
 from django_qbe2.saved_forms import SavedQueryNameForm
@@ -96,7 +97,7 @@ def query_form(request, catalog, data=None):
     if "definition" in source:
         try:
             original = json.loads(source["definition"])
-        except (json.JSONDecodeError, ValueError):
+        except (json.JSONDecodeError, ValueError, RecursionError):
             form = QueryBuilderForm(data, catalog=catalog)
             form.is_valid()
             form.add_error(None, _("Invalid query definition."))
@@ -123,6 +124,76 @@ def query_form(request, catalog, data=None):
     return form
 
 
+def builder_action(request, catalog, saved_query):
+    data = default_group_data(request.POST, get_limits()).copy()
+    form = QueryBuilderForm(data, catalog=catalog, structure_only=True)
+    status = 200
+    try:
+        if not form.groups.is_valid():
+            raise ValidationError(_("Correct the condition groups below."))
+        nodes, removed = validate_structure(form.groups.cleaned_data, get_limits())
+        action, separator, identity = request.POST.get("action", "").partition(":")
+        if not separator or identity not in nodes or identity in removed:
+            raise ValidationError(_("Choose an available parent group."))
+        prefix = "groups" if action == "add_group" else "filters"
+        maximum = (
+            get_limits().max_groups if prefix == "groups" else get_limits().max_filters
+        )
+        management = (
+            form.groups.management_form
+            if prefix == "groups"
+            else form.filters.management_form
+        )
+        if not management.is_valid():
+            raise ValidationError(_("Invalid condition controls."))
+        count = management.cleaned_data["TOTAL_FORMS"]
+        if count < 0 or count >= maximum:
+            raise ValidationError(_("The condition limit was reached."))
+        if prefix == "groups":
+            current = identity
+            depth = 1
+            while current != "root":
+                current = nodes[current]["parent"]
+                depth += 1
+            if depth >= get_limits().max_group_depth:
+                raise ValidationError(_("The condition group depth limit was reached."))
+            new_id = next(
+                f"g{index}"
+                for index in range(1, maximum + 1)
+                if f"g{index}" not in nodes
+            )
+            values = {"id": new_id, "parent": identity, "connector": "and"}
+        else:
+            values = {"group": identity}
+        data[f"{prefix}-TOTAL_FORMS"] = str(count + 1)
+        for key, value in values.items():
+            data[f"{prefix}-{count}-{key}"] = value
+        form = QueryBuilderForm(data, catalog=catalog, structure_only=True)
+        added = (
+            form.groups.forms[count]
+            if prefix == "groups"
+            else form.filters.forms[count]
+        )
+        added.fields["connector" if prefix == "groups" else "field"].widget.attrs[
+            "autofocus"
+        ] = True
+    except (ValidationError, ValueError) as error:
+        form.is_valid()
+        form.add_error(
+            None,
+            error.messages
+            if isinstance(error, ValidationError)
+            else _("Invalid condition controls."),
+        )
+        status = 400
+    return render(
+        request,
+        "django_qbe2/builder.html",
+        {**builder_context(request, catalog, form), "saved_query": saved_query},
+        status=status,
+    )
+
+
 @require_qbe_access
 @require_POST
 @report_errors
@@ -136,6 +207,11 @@ def results_view(request: HttpRequest):
             and saved_query.definition.get("report") not in catalog
         ):
             raise Http404("Report not available.")
+    if request.POST.get("action", "").split(":", 1)[0] in (
+        "add_condition",
+        "add_group",
+    ):
+        return builder_action(request, catalog, saved_query)
     form = query_form(request, catalog)
     if not form.is_valid() or request.POST.get("action") == "edit":
         status = 200 if form.is_valid() else 400

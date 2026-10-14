@@ -1,0 +1,11 @@
+{% load i18n %}
+<fieldset class="qbe-condition-group" data-group="{{ node.id }}">
+  <legend>{% if node.id == "root" %}{% translate "All conditions" %}{% else %}{% translate "Group" %} {{ node.id }}{% endif %}</legend>
+  {% if node.form %}<div class="qbe-group-controls">{{ node.form.as_div }}</div>{% endif %}
+  <div class="qbe-group-filters">{% for row in node.filters %}<div class="qbe-row qbe-filter-row">{{ row.as_div }}</div>{% endfor %}</div>
+  <div class="qbe-group-children">{% for child in node.children %}{% include "django_qbe2/condition_group.html" with node=child only %}{% endfor %}</div>
+  <div class="qbe-group-actions">
+    <button type="submit" name="action" value="add_condition:{{ node.id }}" class="button" formnovalidate>{% translate "Add condition" %}</button>
+    <button type="submit" name="action" value="add_group:{{ node.id }}" class="button" formnovalidate>{% translate "Add group" %}</button>
+  </div>
+</fieldset>

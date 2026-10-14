@@ -4,13 +4,13 @@ from django.test import TestCase
 
 from django_qbe2.engine import build_queryset
 from django_qbe2.validation import validate_definition
+from tests import test_engine
 from tests.models import Customer, Order
 from tests.test_condition_validation import group, grouped_payload, leaf
-from tests.test_engine import EngineTests
 
 
 class ConditionEngineTests(TestCase):
-    setUp = EngineTests.setUp
+    setUp = test_engine.EngineTests.setUp
 
     def query(self, where):
         definition = validate_definition(grouped_payload(where), self.catalog)

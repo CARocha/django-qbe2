@@ -8,6 +8,14 @@ from django.utils.translation import gettext_lazy as _
 
 from django_qbe2.catalog import ReportSpec
 from django_qbe2.choices import choice_value
+from django_qbe2.group_forms import (
+    build_where,
+    default_group_data,
+    display_groups,
+    flatten_where,
+    make_groups,
+    validate_structure,
+)
 from django_qbe2.limits import get_limits
 from django_qbe2.validation import validate_definition
 
@@ -55,12 +63,18 @@ class ChoiceSelect(forms.Select):
 
 
 class FilterForm(forms.Form):
+    group = forms.ChoiceField(label=_("Condition group"), required=False)
     field = forms.ChoiceField(label=_("Field"), required=False)
     operator = forms.ChoiceField(label=_("Condition"), required=False)
     value = forms.CharField(label=_("Value"), required=False, strip=False)
 
-    def __init__(self, *args, fields, **kwargs):
+    def __init__(self, *args, fields, group_choices=None, **kwargs):
         super().__init__(*args, **kwargs)
+        if "group" in self.fields:
+            self.fields["group"].choices = group_choices or [
+                ("root", _("All conditions"))
+            ]
+            self.fields["group"].initial = "root"
         self.fields["field"].choices = [("", _("Choose field"))] + [
             (path, field.label) for path, field in fields.items()
         ]
@@ -125,8 +139,17 @@ class QueryBuilderForm(forms.Form):
     )
     page_size = forms.IntegerField(label=_("Rows per page"), min_value=1)
 
-    def __init__(self, data=None, *, catalog: dict[str, ReportSpec], initial=None):
+    def __init__(
+        self,
+        data=None,
+        *,
+        catalog: dict[str, ReportSpec],
+        initial=None,
+        structure_only=False,
+    ):
         limits = get_limits()
+        data = default_group_data(data, limits)
+        self.groups, group_choices = make_groups(data, limits)
         initial = dict(initial or {})
         selected = data.get("report") if data is not None else initial.get("report")
         selected = selected or next(iter(sorted(catalog)), "")
@@ -135,6 +158,7 @@ class QueryBuilderForm(forms.Form):
         initial.setdefault("columns", list(fields)[:2])
         initial.setdefault("page_size", limits.page_size)
         super().__init__(data=data, initial=initial)
+        self.structure_only = structure_only
         self.catalog = catalog
         self.report_id = selected
         self.fields["report"].choices = [
@@ -154,7 +178,11 @@ class QueryBuilderForm(forms.Form):
             max_num=limits.max_filters,
             validate_max=True,
             absolute_max=limits.max_filters,
-        )(data=data, prefix="filters", form_kwargs={"fields": fields})
+        )(
+            data=data,
+            prefix="filters",
+            form_kwargs={"fields": fields, "group_choices": group_choices},
+        )
         self.ordering = formset_factory(
             OrderingForm,
             extra=1,
@@ -166,11 +194,15 @@ class QueryBuilderForm(forms.Form):
 
     def clean(self):
         cleaned = super().clean()
+        groups_valid = self.groups.is_valid()
         filters_valid = self.filters.is_valid()
         ordering_valid = self.ordering.is_valid()
-        if self.errors or not filters_valid or not ordering_valid:
-            if not filters_valid or not ordering_valid:
+        if self.errors or not filters_valid or not ordering_valid or not groups_valid:
+            if not filters_valid or not ordering_valid or not groups_valid:
                 raise ValidationError(_("Correct the conditions or ordering below."))
+            return cleaned
+        if self.structure_only:
+            validate_structure(self.groups.cleaned_data, get_limits())
             return cleaned
         fields = self.catalog[cleaned["report"]].fields
         filters = []
@@ -188,7 +220,12 @@ class QueryBuilderForm(forms.Form):
                 if raw.lower() in ("true", "false"):
                     raw = raw.lower() == "true"
             filters.append(
-                {"field": row["field"], "operator": row["operator"], "value": raw}
+                {
+                    "field": row["field"],
+                    "operator": row["operator"],
+                    "value": raw,
+                    "group": row.get("group") or "root",
+                }
             )
         ordering = [
             {"field": row["field"], "direction": row["direction"]}
@@ -199,15 +236,37 @@ class QueryBuilderForm(forms.Form):
             "version": 1,
             "report": cleaned["report"],
             "columns": cleaned["columns"],
-            "filters": filters,
+            "filters": [
+                {key: row[key] for key in ("field", "operator", "value")}
+                for row in filters
+            ],
             "ordering": ordering,
         }
         try:
+            nodes, removed = validate_structure(self.groups.cleaned_data, get_limits())
+            where = build_where(nodes, removed, filters)
+            if (
+                len(nodes.keys() - removed) == 1
+                and where["connector"] == "and"
+                and not where["negated"]
+            ):
+                self.payload["filters"] = where["children"]
+            else:
+                self.payload.pop("filters")
+                self.payload.update(version=2, where=where)
             self.definition = validate_definition(self.payload, self.catalog)
         except ValidationError as error:
-            for control, messages in error.message_dict.items():
+            for control, messages in (
+                error.message_dict
+                if hasattr(error, "message_dict")
+                else {"filters": error.messages}
+            ).items():
                 self.add_error(control if control in self.fields else None, messages)
         return cleaned
+
+    @property
+    def condition_groups(self):
+        return display_groups(self.groups, self.filters)
 
 
 def payload_form_data(payload: object, *, page_size: str) -> QueryDict:
@@ -222,10 +281,19 @@ def payload_form_data(payload: object, *, page_size: str) -> QueryDict:
     )
     data["page_size"] = page_size
     limits = get_limits()
+    if payload.get("version") == 2:
+        try:
+            groups, filters = flatten_where(payload.get("where"), limits)
+        except ValidationError:
+            groups, filters = [], []
+        payload = {**payload, "groups": groups, "filters": filters}
     for prefix, maximum in (
+        ("groups", limits.max_groups),
         ("filters", limits.max_filters),
         ("ordering", limits.max_ordering),
     ):
+        if prefix == "groups" and "groups" not in payload:
+            continue
         rows = payload.get(prefix, [])
         rows = rows if isinstance(rows, list) else []
         data[f"{prefix}-TOTAL_FORMS"] = str(max(1, len(rows)))
@@ -236,9 +304,21 @@ def payload_form_data(payload: object, *, page_size: str) -> QueryDict:
             if not isinstance(row, dict):
                 continue
             for key, value in row.items():
-                if key not in ("field", "operator", "value", "direction"):
+                if key not in (
+                    "field",
+                    "operator",
+                    "value",
+                    "direction",
+                    "id",
+                    "parent",
+                    "connector",
+                    "negated",
+                    "group",
+                ):
                     continue
-                if type(value) is bool:
+                if key == "negated":
+                    value = "on" if value is True else ""
+                elif type(value) is bool:
                     value = "true" if value else "false"
                 data[f"{prefix}-{index}-{key}"] = str(value)
     return data

@@ -1,10 +1,11 @@
 from copy import deepcopy
 
 from django.core.exceptions import ImproperlyConfigured, ValidationError
-from django.test import override_settings
+from django.test import TestCase, override_settings
 
 from django_qbe2.validation import validate_definition
-from tests.test_validation import ValidationTests, order_payload
+from tests import test_validation
+from tests.test_validation import order_payload
 
 
 def leaf(field="number", value="A100", operator="exact"):
@@ -21,7 +22,9 @@ def grouped_payload(where=None):
     return {**payload, "version": 2, "where": group(leaf()) if where is None else where}
 
 
-class ConditionValidationTests(ValidationTests):
+class ConditionValidationTests(TestCase):
+    setUp = test_validation.ValidationTests.setUp
+
     def test_accepts_mixed_tree_and_discovers_all_leaves(self):
         definition = validate_definition(
             grouped_payload(
