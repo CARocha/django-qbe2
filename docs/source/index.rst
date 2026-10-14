@@ -7,9 +7,9 @@ Django 6.1**, inspired by `versae/qbe <https://github.com/versae/qbe>`_.
 
 .. warning::
 
-   This is an experimental, unreleased implementation. It has not been published
-   to PyPI. Use the checkout or a locally built wheel. The public configuration
-   API may change before a stable release.
+   This is an experimental alpha. Check PyPI for the ``0.1.0a1`` candidate's
+   availability, or use the checkout/a locally built wheel. The public
+   configuration API may change before a stable release.
 
 Start with :doc:`quickstart` to try the synthetic demo, or :doc:`installation` to
 add the app to an existing project. Read :doc:`reports` before exposing real data:

@@ -12,7 +12,9 @@ Sphinx, Ruff and database test drivers are development tools.
 Build and install a wheel
 -------------------------
 
-The package is not on PyPI yet. From the source checkout, build a wheel:
+The first alpha candidate is ``0.1.0a1``. Check its availability on PyPI before
+using ``python -m pip install django-qbe2==0.1.0a1``. From the source checkout,
+you can always build and install a local wheel:
 
 .. code-block:: console
 
@@ -22,7 +24,7 @@ In your host project's environment, install that wheel using its absolute path:
 
 .. code-block:: console
 
-   python -m pip install /absolute/path/to/django-qbe2/dist/django_qbe2-0.1.0-py3-none-any.whl
+   python -m pip install /absolute/path/to/django-qbe2/dist/django_qbe2-0.1.0a1-py3-none-any.whl
 
 The distribution name is ``django-qbe2``; the import and app name is
 ``django_qbe2``. The wheel contains namespaced templates and static assets. It
