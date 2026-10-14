@@ -94,7 +94,9 @@ Promote the verified files to PyPI
    Confirm the public project/version page before announcing availability.
 
 If a post-upload verification fails, inspect the error and repair the release
-process; the uploaded version still exists. Use a new version for code changes.
+process; the uploaded version still exists. Rerun only the failed verification
+job to retain the original uploaded files and run ID. A new dispatch/full rerun
+attempts another upload of immutable filenames. Use a new version for code changes.
 TestPyPI is temporary test infrastructure, not a permanent release archive.
 
 Repository and documentation publication
