@@ -2,10 +2,10 @@
 
 ## Start here
 
-Django QBE 2 is an experimental reusable reporting app for Python 3.14 and Django
-6.1. Read README.md for setup, docs/source/index.rst for the public documentation,
-and CHANGELOG.md for the current scope. Check Git status and recent commits before
-editing. Do not repeat completed work or overwrite another contributor's changes.
+Django QBE 2 is an experimental reusable reporting app for Python 3.13–3.14 and
+Django 6.0–6.1. Read README.md for setup, docs/source/index.rst for the public
+documentation, and CHANGELOG.md for the current scope. Check Git status and recent
+commits before editing. Do not repeat completed work or overwrite another contributor's changes.
 
 ## Scope and architecture
 
@@ -80,8 +80,12 @@ uv build
 ```
 
 PostgreSQL tests use QBE2_TEST_DB=postgres and standard PG variables for an isolated
-instance. Never run tests against a user's existing database. CI must run on both
-SQLite and PostgreSQL; the PostgreSQL-only cancellation test may skip only on SQLite.
+instance. Never run tests against a user's existing database. CI must run all four
+Python/Django combinations on both SQLite and PostgreSQL; the PostgreSQL-only
+cancellation test may skip only on SQLite.
+Use the compatibility commands in docs/source/contributing.rst; a frozen lock alone
+selects one Django version and does not verify the whole supported range. Keep Ruff
+targeted at Python 3.13 so formatting does not introduce Python 3.14-only syntax.
 A local workflow inspection is not evidence that remote CI or publication succeeded.
 
 ## Documentation and licensing
@@ -95,8 +99,8 @@ upstream notices if code is reused in a future contribution.
 ## Package publication
 
 Read docs/source/releases.rst. Publish uses release.yml and requires a matching v*
-tag on main. TestPyPI publication must pass its consumer smoke check first. PyPI
-promotion reuses that successful run's exact artifacts, verifies the commit and
-index SHA256 hashes, and uses the pypi environment approval. Never rebuild artifacts
+tag on main. TestPyPI publication must pass consumer smoke checks for all four
+runtimes first. PyPI promotion reuses that successful run's exact artifacts, verifies
+the commit and index SHA256 hashes, and uses the pypi environment approval. Never rebuild artifacts
 for promotion, enable skip-existing to hide a mismatch, or expose OIDC credentials
 to build/test jobs. Configure the environments and pending publishers before dispatch.
