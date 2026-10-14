@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.1.0a1 — release candidate
 
 ### Added
 
@@ -17,5 +17,5 @@
 - Synthetic customer/order demo and idempotent seed command.
 - Unit/integration tests, PostgreSQL/SQLite CI and external wheel installation checks.
 
-This is the experimental implementation intended for the first 0.1.0 release.
-No release has been published yet.
+This is the initial experimental alpha candidate. Availability is confirmed by
+the successful publication workflow and the corresponding index entry.

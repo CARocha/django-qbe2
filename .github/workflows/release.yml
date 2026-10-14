@@ -1,0 +1,193 @@
+name: Publish
+
+on:
+  workflow_dispatch:
+    inputs:
+      destination:
+        description: Index to publish to (TestPyPI first)
+        required: true
+        type: choice
+        options: [testpypi, pypi]
+        default: testpypi
+      source_run_id:
+        description: Successful TestPyPI Publish run ID (required for PyPI)
+        required: false
+        type: string
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: publish-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  preflight:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
+        with:
+          version: "0.11.24"
+          python-version: "3.14"
+          enable-cache: true
+      - run: uv sync --frozen --group release
+      - name: Require the matching release tag on main
+        run: |
+          uv run --group release python scripts/release_checks.py tag
+          git merge-base --is-ancestor HEAD origin/main
+      - name: Require a verified TestPyPI run for promotion
+        if: inputs.destination == 'pypi'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          QBE2_SOURCE_RUN: ${{ inputs.source_run_id }}
+        run: uv run --group release python scripts/release_checks.py promotion --run-id "$QBE2_SOURCE_RUN"
+
+  checks:
+    needs: preflight
+    uses: ./.github/workflows/ci.yml
+
+  build:
+    if: inputs.destination == 'testpypi'
+    needs: [preflight, checks]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
+        with:
+          version: "0.11.24"
+          python-version: "3.14"
+          enable-cache: true
+      - run: uv sync --frozen --group release
+      - name: Build with the locked backend
+        run: |
+          qbe2_epoch=$(git show -s --format=%ct HEAD)
+          SOURCE_DATE_EPOCH="$qbe2_epoch" uv build --no-build-isolation
+      - run: uv run --group release twine check --strict dist/*
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: release-dist
+          path: dist/
+          if-no-files-found: error
+          retention-days: 30
+
+  publish-testpypi:
+    if: inputs.destination == 'testpypi'
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment:
+      name: testpypi
+      url: https://test.pypi.org/project/django-qbe2/
+    permissions:
+      contents: read
+      actions: read
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: release-dist
+          path: dist/
+      - uses: pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33 # v1.14.2
+        with:
+          repository-url: https://test.pypi.org/legacy/
+
+  verify-testpypi:
+    name: Verify TestPyPI installation
+    needs: [preflight, publish-testpypi]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
+        with:
+          version: "0.11.24"
+          python-version: "3.14"
+          enable-cache: true
+      - run: uv sync --frozen --group release
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: release-dist
+          path: dist/
+      - run: uv run --group release python scripts/release_checks.py index --index testpypi --dist dist
+      - run: uv run --group release python scripts/smoke_install.py --index testpypi
+
+  promotion:
+    if: inputs.destination == 'pypi'
+    needs: [preflight, checks]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
+        with:
+          version: "0.11.24"
+          python-version: "3.14"
+          enable-cache: true
+      - run: uv sync --frozen --group release
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: release-dist
+          path: dist/
+          run-id: ${{ inputs.source_run_id }}
+          github-token: ${{ github.token }}
+      - run: uv run --group release python scripts/release_checks.py index --index testpypi --dist dist
+      - run: uv run --group release twine check --strict dist/*
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: release-dist
+          path: dist/
+          if-no-files-found: error
+          retention-days: 30
+
+  publish-pypi:
+    if: inputs.destination == 'pypi'
+    needs: promotion
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment:
+      name: pypi
+      url: https://pypi.org/project/django-qbe2/
+    permissions:
+      contents: read
+      actions: read
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: release-dist
+          path: dist/
+      - uses: pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33 # v1.14.2
+
+  verify-pypi:
+    needs: [publish-pypi]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
+        with:
+          version: "0.11.24"
+          python-version: "3.14"
+          enable-cache: true
+      - run: uv sync --frozen --group release
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: release-dist
+          path: dist/
+      - run: uv run --group release python scripts/release_checks.py index --index pypi --dist dist
+      - run: uv run --group release python scripts/smoke_install.py --index pypi

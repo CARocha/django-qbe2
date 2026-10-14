@@ -28,9 +28,7 @@ with the same username. The second account is ``qbe2_demo_bob``; use
 
 .. note::
 
-   These instructions apply to a checkout containing the initial implementation.
-   The repository must receive its first implementation push before the clone
-   command provides that code. The demo server and its SQLite database are for
+   The demo server and its SQLite database are for
    local development; retain your host project's normal production settings.
 
 Build a report

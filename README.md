@@ -4,9 +4,10 @@ A reusable Django app for building authorized reports without writing SQL.
 Choose columns, add typed conditions, follow model relationships, preview paginated
 results and export a CSV. Designed for **Python 3.14 and Django 6.1**.
 
-**Experimental, unreleased:** this is the initial implementation, not a production
-release or a drop-in replacement for the original package. It has not been published
-to PyPI. Inspired by [versae/qbe](https://github.com/versae/qbe), rebuilt around
+**Experimental alpha:** this is the initial implementation, not a production
+release or a drop-in replacement for the original package. The first release
+candidate is `0.1.0a1`; check [PyPI](https://pypi.org/project/django-qbe2/) for its
+availability. Inspired by [versae/qbe](https://github.com/versae/qbe), rebuilt around
 Django's ORM, explicit permissions and typed query definitions.
 
 ## Try the demo
@@ -33,7 +34,7 @@ Build and install the local wheel in that project's environment:
 
 ```sh
 uv build
-python -m pip install /absolute/path/to/dist/django_qbe2-0.1.0-py3-none-any.whl
+python -m pip install /absolute/path/to/dist/django_qbe2-0.1.0a1-py3-none-any.whl
 ```
 
 Add the app and mount its namespaced URLs alongside Django Admin:
@@ -100,10 +101,10 @@ authorization. The same policies apply to columns, filters, ordering, HTML and C
 Saved queries, aggregates, OR/NOT groups, ManyToMany, inverse relationships,
 arbitrary joins, multi-database selection, Excel and the visual diagram are later work.
 CSV uses a synchronous streaming iterator intended for WSGI deployment.
-See the [public documentation](docs/README.md) for installation, row policies,
+See the [public documentation](https://github.com/CARocha/django-qbe2/blob/main/docs/README.md) for installation, row policies,
 settings, API reference and troubleshooting. Sources are plain English
-reStructuredText under [docs/source](docs/source/index.rst), readable by developers
-and agents. Contributor instructions live in [AGENTS.md](AGENTS.md).
+reStructuredText under [docs/source](https://github.com/CARocha/django-qbe2/blob/main/docs/source/index.rst), readable by developers
+and agents. Contributor instructions live in [AGENTS.md](https://github.com/CARocha/django-qbe2/blob/main/AGENTS.md).
 
 ## Build the documentation
 

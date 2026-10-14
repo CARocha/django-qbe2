@@ -16,7 +16,8 @@ editing. Do not repeat completed work or overwrite another contributor's changes
 - Saved queries, aggregates, OR/NOT, ManyToMany, reverse relations, arbitrary SQL,
   visual diagrams, multiple databases and ASGI-native streaming need separate work.
 - Runtime dependency is Django only. Documentation tools belong to the docs group,
-  and test/lint tools belong to the dev group.
+  and test/lint tools belong to the dev group. Locked build/publishing tools belong
+  to the release group; they are not runtime dependencies.
 - Follow https://docs.djangoproject.com/en/6.1/intro/reusable-apps/ and public Django
   APIs. Namespace URLs, templates and assets under django_qbe2. Include the assets
   in the wheel and sdist. The app must not depend on the demo or import test models.
@@ -90,3 +91,12 @@ with the code. Sphinx builds must pass with warnings treated as errors. The docu
 consumer examples are exercised by the external-wheel installation test.
 Preserve the MIT license and attribution to versae/qbe as inspiration. Preserve any
 upstream notices if code is reused in a future contribution.
+
+## Package publication
+
+Read docs/source/releases.rst. Publish uses release.yml and requires a matching v*
+tag on main. TestPyPI publication must pass its consumer smoke check first. PyPI
+promotion reuses that successful run's exact artifacts, verifies the commit and
+index SHA256 hashes, and uses the pypi environment approval. Never rebuild artifacts
+for promotion, enable skip-existing to hide a mismatch, or expose OIDC credentials
+to build/test jobs. Configure the environments and pending publishers before dispatch.
