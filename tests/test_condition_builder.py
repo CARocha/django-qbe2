@@ -94,3 +94,13 @@ class ConditionBuilderTests(TestCase):
             "/qbe/results/", {"definition": json.dumps(payload), "page_size": 50}
         )
         self.assertEqual(response.status_code, 400)
+
+    def test_removing_group_discards_incomplete_descendant_controls(self):
+        data = self.data(group(leaf(), group(leaf(value="A200"))))
+        data["groups-1-DELETE"] = "on"
+        data["filters-1-field"] = ""
+        data["filters-1-operator"] = ""
+        data["filters-1-value"] = "unfinished"
+        form = QueryBuilderForm(data, catalog=self.catalog)
+        self.assertTrue(form.is_valid(), form.errors)
+        self.assertEqual(form.payload["filters"], [leaf()])

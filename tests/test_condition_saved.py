@@ -1,6 +1,7 @@
 import csv
 import io
 import json
+import re
 
 from django.db import connection
 from django.test import TransactionTestCase
@@ -99,7 +100,16 @@ class ConditionSavedTests(TransactionTestCase):
         ]
         self.assertTrue(business_queries)
         self.assertTrue(
-            all(sql.startswith("SELECT") for sql in business_queries), business_queries
+            all(
+                sql.startswith("SELECT")
+                or re.fullmatch(
+                    r'DECLARE "[^"]+" NO SCROLL CURSOR (?:WITH HOLD )?FOR SELECT .*',
+                    sql,
+                    flags=re.DOTALL,
+                )
+                for sql in business_queries
+            ),
+            business_queries,
         )
         self.assertEqual(list(Order.objects.order_by("pk").values()), before)
 

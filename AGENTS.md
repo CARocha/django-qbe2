@@ -11,8 +11,8 @@ commits before editing. Do not repeat completed work or overwrite another contri
 
 - src/django_qbe2/ is the installable app; demo/ is a separate consumer;
   tests/ verifies the contract; docs/source/ contains the Sphinx sources.
-- The current app supports explicit registration, selected columns, typed AND
-  filters, one forward FK/OneToOne hop, stable bounded pagination and CSV.
+- The current app supports explicit registration, selected columns, typed AND/OR/NOT
+  condition groups, one forward FK/OneToOne hop, stable bounded pagination and CSV.
 - Declared model choices drive equality selectors and HTML labels. CSV, filters
   and ordering retain stored codes. Only equality validates membership; fragments
   and range thresholds may use values outside the choices. Preserve zero, false,
@@ -28,7 +28,7 @@ commits before editing. Do not repeat completed work or overwrite another contri
 - Default Admin registers SavedQuery only as navigation to the authorized QBE
   list. Never expose raw add/change/delete/history model routes or JSON editing;
   adding navigation must not bypass ownership or sharing policies.
-- Aggregates, OR/NOT, ManyToMany, reverse relations, arbitrary SQL,
+- Aggregates, ManyToMany, reverse relations, arbitrary SQL,
   visual diagrams, multiple databases and ASGI-native streaming need separate work.
 - Runtime dependency is Django only. Documentation tools belong to the docs group,
   and test/lint tools belong to the dev group. Locked build/publishing tools belong
@@ -52,12 +52,18 @@ Do not add speculative abstractions or request-specific shared mutable state.
   not authorize rows, and a superuser still follows the report's row policy.
 - Use the same scope for columns, filters, ordering, results and CSV. Server-side
   authorization is mandatory even when a control is hidden in the browser.
-- Validate JSON v1, permitted paths/operators, typed values and positive limits.
+- Validate unchanged JSON v1 and strict v2 condition trees, permitted paths/operators,
+  typed values and positive limits. OR/NOT never includes root or related row policies.
 - Never use eval, pickle or arbitrary client SQL. Do not commit real data or secrets.
 - Default budgets: 50 rows/page (maximum 200), 20 columns, 20 filters, 3 sort keys,
-  10,000 rows/report; PostgreSQL report statements time out after 5 seconds.
+  10 groups and three group levels including the root, 10,000 rows/report; PostgreSQL report statements time out after 5 seconds.
 - Escape text formulas in CSV and preserve numeric precision. Streaming targets
   synchronous WSGI; late failures abort the download and must release resources.
+
+Group forms use bounded identifiers and parent links; reject cycles, disconnected nodes
+and unknown assignments. Only the unnegated AND root may be empty on execution.
+Add controls through server actions without executing reports; retain no-JavaScript
+operation. Existing saved definitions need no new migration for groups.
 
 ## Workflow
 

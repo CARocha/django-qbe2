@@ -2,7 +2,8 @@ Build and export queries
 ========================
 
 Choose registered columns, add conditions and choose sort keys. Conditions are
-combined with AND, including multiple conditions on the same field. Only catalog
+combined in visible AND, OR and NOT groups, including repeated conditions on
+the same field. Existing flat conditions retain AND semantics. Only catalog
 paths and operators are accepted; arbitrary SQL, Python expressions and regular
 expression lookups are never accepted.
 
@@ -130,3 +131,81 @@ must be nonempty and distinct; ordering fields must be distinct. Extra keys,
 unknown versions, paths, operators and invalid values are rejected. Result rows
 are never stored in the session. Explicitly saved definitions are separate
 database records; see :doc:`saved_queries`. No result rows are stored.
+
+
+Condition groups and definition v2
+----------------------------------
+
+Use **Match all (AND)** when every child must match, **Match any (OR)** when at
+least one must match, and **Exclude this group (NOT)** to negate the whole group.
+For example, ``(status paid OR overdue) AND NOT delivered`` uses an AND root,
+an OR child with two status conditions, and a negated child with one delivered
+condition. These are generic controls for the fields each report exposes.
+
+Add condition and Add group preserve entered values and refresh the builder;
+they do not execute the report. Parent group and Condition group selectors move
+controls between groups. Removing a group also removes its descendants on the
+next preview. The root cannot be removed. The controls work without JavaScript;
+JavaScript additionally arranges moved controls immediately and adapts value widgets.
+
+Group limits count the whole expression: by default 20 conditions, 10 groups
+including the root, and three group levels including the root. Empty nested
+groups are rejected on preview. Only an empty, unnegated AND root represents an
+unfiltered report. A root using OR or NOT must contain a condition.
+
+Flat, unnegated AND controls use v1. Nested groups, OR or NOT use v2, which replaces
+the top-level ``filters`` key with ``where``:
+
+.. code-block:: json
+
+   {
+     "version": 2,
+     "report": "sales.order",
+     "columns": ["number", "total"],
+     "where": {
+       "connector": "and",
+       "negated": false,
+       "children": [
+         {"field": "total", "operator": "gte", "value": "100.00"},
+         {
+           "connector": "or",
+           "negated": false,
+           "children": [
+             {"field": "status", "operator": "exact", "value": "paid"},
+             {"field": "status", "operator": "exact", "value": "overdue"}
+           ]
+         }
+       ]
+     },
+     "ordering": []
+   }
+
+All five top-level keys are required. Each group has exactly ``connector``,
+``negated`` and ``children``; connector is ``and`` or ``or``, negated is a JSON
+boolean, and children is a list of groups or ordinary filter leaves. Every branch
+is validated against the current catalog. Unknown keys and excessive trees are
+rejected. Form group identifiers do not appear in the saved definition. Rebuilding
+controls may reorder siblings; AND/OR results do not depend on sibling order.
+
+NULL and authorization semantics
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Groups compile to Django's `Q objects
+<https://docs.djangoproject.com/en/6.1/topics/db/queries/#complex-lookups-with-q-objects>`_.
+NOT uses Django's negated lookup semantics. For a nullable date, NOT equals
+``2026-10-14`` also matches NULL dates. To require a different nonempty date, use
+an AND group containing ``isnull = false`` and a negated equality subgroup.
+
+Root row policies and related-object scopes are applied outside the whole user
+expression. OR and NOT cannot negate these restrictions. Referencing a related
+field anywhere applies its target scope to the entire report, even when a local
+OR branch matches; the existing nullable-relation behavior remains unchanged.
+Sharing a grouped definition does not share its creator's access to rows.
+
+Preview and CSV read business data; they do not offer create, update or delete
+operations. Saving, sharing and removing definitions writes the app's separate
+SavedQuery storage. Consumer-provided policies, callable choices and field
+validators are trusted application code, and database credentials remain the
+consumer's responsibility. Group limits and report budgets bound the feature;
+complex filters may still need appropriate database indexes. SQLite has no
+package-enforced statement timeout.

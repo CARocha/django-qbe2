@@ -1,6 +1,18 @@
 # Changelog
 
-## 0.1.0a5 — release candidate
+## 0.1.0a6 — release candidate
+
+### Added
+
+- Visible nested AND/OR/NOT condition groups with keyboard-accessible controls
+  and server-rendered additions that work without JavaScript.
+- Bounded JSON v2 definitions, retaining unchanged v1 AND semantics and saved data.
+- Global group/depth limits and tests proving root and related-row policies remain
+  outside OR/NOT expressions, including shared execution, pagination and CSV.
+
+No database migration is required for condition groups.
+
+## 0.1.0a5 — 2026-10-14
 
 ### Added
 

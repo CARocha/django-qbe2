@@ -195,6 +195,14 @@ class QueryBuilderForm(forms.Form):
     def clean(self):
         cleaned = super().clean()
         groups_valid = self.groups.is_valid()
+        nodes, removed = {}, set()
+        if groups_valid:
+            nodes, removed = validate_structure(self.groups.cleaned_data, get_limits())
+            if removed:
+                for row in self.filters:
+                    if row["group"].value() in removed:
+                        row.data = row.data.copy()
+                        row.data[row.add_prefix("DELETE")] = "on"
         filters_valid = self.filters.is_valid()
         ordering_valid = self.ordering.is_valid()
         if self.errors or not filters_valid or not ordering_valid or not groups_valid:
@@ -243,7 +251,6 @@ class QueryBuilderForm(forms.Form):
             "ordering": ordering,
         }
         try:
-            nodes, removed = validate_structure(self.groups.cleaned_data, get_limits())
             where = build_where(nodes, removed, filters)
             if (
                 len(nodes.keys() - removed) == 1
