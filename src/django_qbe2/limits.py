@@ -12,6 +12,7 @@ class Limits:
     max_filters: int = 20
     max_ordering: int = 3
     max_rows: int = 10_000
+    max_saved_queries: int = 100
 
 
 def get_limits() -> Limits:
