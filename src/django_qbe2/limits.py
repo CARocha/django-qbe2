@@ -10,6 +10,8 @@ class Limits:
     max_page_size: int = 200
     max_columns: int = 20
     max_filters: int = 20
+    max_groups: int = 10
+    max_group_depth: int = 3
     max_ordering: int = 3
     max_rows: int = 10_000
     max_saved_queries: int = 100

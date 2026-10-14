@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from dataclasses import dataclass
 from datetime import date, datetime
 from decimal import Decimal
@@ -15,6 +17,13 @@ class FilterSpec:
 
 
 @dataclass(frozen=True)
+class ConditionGroup:
+    connector: Literal["and", "or"]
+    negated: bool
+    children: tuple[FilterSpec | ConditionGroup, ...]
+
+
+@dataclass(frozen=True)
 class OrderingSpec:
     field: str
     direction: Literal["asc", "desc"]
@@ -22,8 +31,9 @@ class OrderingSpec:
 
 @dataclass(frozen=True)
 class QueryDefinition:
-    version: Literal[1]
+    version: Literal[1, 2]
     report: str
     columns: tuple[str, ...]
     filters: tuple[FilterSpec, ...]
     ordering: tuple[OrderingSpec, ...]
+    where: ConditionGroup | None = None
