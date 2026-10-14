@@ -6,7 +6,7 @@ results and export a CSV. Supports **Python 3.13–3.14 and Django 6.0–6.1**.
 
 **Experimental alpha:** this is the initial implementation, not a production
 release or a drop-in replacement for the original package. The current release
-candidate is `0.1.0a4`; check [PyPI](https://pypi.org/project/django-qbe2/) for its
+candidate is `0.1.0a5`; check [PyPI](https://pypi.org/project/django-qbe2/) for its
 availability. Inspired by [versae/qbe](https://github.com/versae/qbe), rebuilt around
 Django's ORM, explicit permissions and typed query definitions.
 
@@ -34,14 +34,14 @@ In your project's virtual environment, install the explicit alpha version after
 checking its availability on PyPI:
 
 ```sh
-python -m pip install django-qbe2==0.1.0a4
+python -m pip install django-qbe2==0.1.0a5
 ```
 
 To try the checkout before publication, build and install its wheel:
 
 ```sh
 uv build
-python -m pip install /absolute/path/to/dist/django_qbe2-0.1.0a4-py3-none-any.whl
+python -m pip install /absolute/path/to/dist/django_qbe2-0.1.0a5-py3-none-any.whl
 ```
 
 Add the app and mount its namespaced URLs alongside Django Admin:

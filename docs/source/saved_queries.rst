@@ -18,6 +18,16 @@ the default database. Both user relationships use ``AUTH_USER_MODEL``; custom
 users and UUID user primary keys are supported. No business models are changed.
 Run your normal migrations and static deployment process when upgrading.
 
+Find your queries
+-----------------
+
+Use **Saved queries** at the top of the QBE builder/results, or open
+``<your-qbe-prefix>/saved/`` directly. From the ``0.1.0a5`` candidate, Django's
+default Admin also shows **Django QBE 2 > Saved queries** in its app list and
+sidebar. That entry opens the same authorized QBE list; **Build a report** returns
+to the builder. It does not expose a separate model editor or grant data access.
+No new database migration is needed for this navigation change.
+
 Save and reuse a definition
 ---------------------------
 
