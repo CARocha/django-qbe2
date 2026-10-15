@@ -97,9 +97,10 @@ class SummaryExecutionTests(TestCase):
             for query in queries
             if "SET_CONFIG" not in query["sql"].upper()
             and "STATEMENT_TIMEOUT" not in query["sql"].upper()
-            and not query["sql"].lstrip().upper().startswith(
-                ("SAVEPOINT", "RELEASE SAVEPOINT", "ROLLBACK TO SAVEPOINT")
-            )
+            and not query["sql"]
+            .lstrip()
+            .upper()
+            .startswith(("SAVEPOINT", "RELEASE SAVEPOINT", "ROLLBACK TO SAVEPOINT"))
         ]
         self.assertTrue(statements)
         self.assertTrue(all(statement.startswith("SELECT") for statement in statements))
