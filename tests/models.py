@@ -9,6 +9,7 @@ class Customer(models.Model):
     owner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     name = models.CharField(max_length=100)
     code = models.CharField(max_length=40, unique=True)
+    credit_limit = models.DecimalField(max_digits=12, decimal_places=2, null=True)
 
 
 class Order(models.Model):
@@ -29,6 +30,11 @@ class Order(models.Model):
     reference = models.UUIDField(default=uuid.uuid4)
     quantity = models.IntegerField(default=0)
     note = models.TextField(blank=True)
+    m1 = models.CharField(
+        max_length=10,
+        choices=(("a", "Same label"), ("A", "Same label")),
+        default="a",
+    )
 
 
 class Profile(models.Model):

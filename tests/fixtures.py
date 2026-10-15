@@ -25,6 +25,7 @@ def make_orders(owner):
         owner=owner,
         name=f"{owner.username.title()} Customer",
         code=owner.username.upper(),
+        credit_limit=Decimal("500.00"),
     )
     return [
         Order.objects.create(

@@ -31,6 +31,10 @@ class Migration(migrations.Migration):
                 ("name", models.CharField(max_length=100)),
                 ("code", models.CharField(max_length=40, unique=True)),
                 (
+                    "credit_limit",
+                    models.DecimalField(decimal_places=2, max_digits=12, null=True),
+                ),
+                (
                     "owner",
                     models.ForeignKey(
                         on_delete=django.db.models.deletion.CASCADE,
@@ -59,6 +63,14 @@ class Migration(migrations.Migration):
                 ("reference", models.UUIDField(default=uuid.uuid4)),
                 ("quantity", models.IntegerField(default=0)),
                 ("note", models.TextField(blank=True)),
+                (
+                    "m1",
+                    models.CharField(
+                        choices=(("a", "Same label"), ("A", "Same label")),
+                        default="a",
+                        max_length=10,
+                    ),
+                ),
                 (
                     "customer",
                     models.ForeignKey(
