@@ -146,6 +146,9 @@ class SummaryScopeTests(TestCase):
 
 
 class MultiValuedSummaryScopeTests(TestCase):
+    setUp = SummaryScopeTests.setUp
+    definition = SummaryScopeTests.definition
+
     def test_multi_valued_filter_counts_each_root_once(self):
         from django.test import RequestFactory
 
