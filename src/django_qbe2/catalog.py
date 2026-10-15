@@ -28,16 +28,42 @@ class CatalogConfigurationError(ImproperlyConfigured):
 
 
 @dataclass(frozen=True)
+class RelationStep:
+    source_model: type[models.Model]
+    accessor: str
+    target_model: type[models.Model]
+    target_report_id: str
+    relation_field: models.Field
+    target_key: str
+    reverse: bool
+    multi_valued: bool
+
+
+@dataclass(frozen=True)
 class FieldSpec:
     path: str
     label: str
     django_field: models.Field
     operators: tuple[str, ...]
-    relation_name: str | None = None
-    target_report_id: str | None = None
-    target_key: str | None = None
+    relations: tuple[RelationStep, ...] = ()
     choices: tuple[tuple[Scalar, str], ...] = ()
     choices_declared: bool = False
+
+    @property
+    def multi_valued(self) -> bool:
+        return any(step.multi_valued for step in self.relations)
+
+    @property
+    def relation_name(self) -> str | None:
+        return self.relations[0].accessor if self.relations else None
+
+    @property
+    def target_report_id(self) -> str | None:
+        return self.relations[0].target_report_id if self.relations else None
+
+    @property
+    def target_key(self) -> str | None:
+        return self.relations[0].target_key if self.relations else None
 
 
 @dataclass(frozen=True)
@@ -65,6 +91,42 @@ def field_operators(field: models.Field) -> tuple[str, ...]:
     return operators + (("isnull",) if field.null else ())
 
 
+def _relation_step(
+    source_model: type[models.Model], field: models.Field
+) -> RelationStep:
+    reverse = field.auto_created and not field.concrete
+    relation_field = field.field if reverse else field
+    target_model = field.related_model
+    if not isinstance(
+        relation_field,
+        (models.ForeignKey, models.OneToOneField, models.ManyToManyField),
+    ):
+        raise CatalogConfigurationError("E003", "Unsupported relation path.")
+    accessor = field.name
+    if relation_field.many_to_many:
+        if reverse:
+            target_key = relation_field.m2m_field_name()
+        else:
+            target_key = relation_field.m2m_reverse_field_name()
+        target_key = relation_field.remote_field.through._meta.get_field(
+            target_key
+        ).target_field.name
+    elif reverse:
+        target_key = relation_field.name
+    else:
+        target_key = relation_field.target_field.name
+    return RelationStep(
+        source_model=source_model,
+        accessor=accessor,
+        target_model=target_model,
+        target_report_id=target_model._meta.label_lower,
+        relation_field=relation_field,
+        target_key=target_key,
+        reverse=reverse,
+        multi_valued=field.one_to_many or field.many_to_many,
+    )
+
+
 def describe_report(report: Report, reports: dict[str, Report]) -> ReportSpec:
     if not isinstance(report.fields, tuple) or not report.fields:
         raise CatalogConfigurationError(
@@ -88,27 +150,43 @@ def describe_report(report: Report, reports: dict[str, Report]) -> ReportSpec:
                 "E002", "Field paths must be unique strings."
             )
         parts = path.split("__")
-        if len(parts) > 2:
+        if len(parts) > 3:
             raise CatalogConfigurationError(
-                "E003", "Only one forward relation hop is supported."
+                "E003", "At most two relation hops are supported."
             )
-        relation_name = target_id = target_key = None
+        relations = []
+        current_model = report.model
+        multi_valued_count = 0
         try:
-            field = report.model._meta.get_field(parts[0])
-            if len(parts) == 2:
-                if not isinstance(field, models.ForeignKey) or field.auto_created:
+            for name in parts[:-1]:
+                relation = current_model._meta.get_field(name)
+                if not relation.is_relation:
                     raise CatalogConfigurationError(
-                        "E003", "Only forward FK/OneToOne relations are supported."
+                        "E003", "Each intermediate path component must be a relation."
                     )
-                target_id = field.related_model._meta.label_lower
-                target = reports.get(target_id)
-                if target is None or parts[1] not in target.fields:
+                step = _relation_step(current_model, relation)
+                target = reports.get(step.target_report_id)
+                if target is None:
                     raise CatalogConfigurationError(
-                        "E004", f"Register target field {target_id}.{parts[1]}."
+                        "E004", f"Register a report for {step.target_report_id}."
                     )
-                relation_name = parts[0]
-                target_key = field.target_field.name
-                field = field.related_model._meta.get_field(parts[1])
+                relations.append(step)
+                multi_valued_count += step.multi_valued
+                if multi_valued_count > 1:
+                    raise CatalogConfigurationError(
+                        "E003",
+                        "A field path may contain only one multi-valued relation.",
+                    )
+                current_model = step.target_model
+            if relations:
+                target = reports[relations[-1].target_report_id]
+                if parts[-1] not in target.fields:
+                    raise CatalogConfigurationError(
+                        "E004",
+                        "Register target field "
+                        f"{relations[-1].target_report_id}.{parts[-1]}.",
+                    )
+            field = current_model._meta.get_field(parts[-1])
         except FieldDoesNotExist as error:
             raise CatalogConfigurationError(
                 "E002", f"Unknown field path: {path}."
@@ -118,9 +196,7 @@ def describe_report(report: Report, reports: dict[str, Report]) -> ReportSpec:
             report.field_labels.get(path, str(field.verbose_name)),
             field,
             field_operators(field),
-            relation_name,
-            target_id,
-            target_key,
+            tuple(relations),
         )
     return ReportSpec(report.model._meta.label_lower, report, fields)
 
@@ -147,7 +223,7 @@ def get_catalog(request: HttpRequest) -> dict[str, ReportSpec]:
                 choices_declared=field.django_field.choices is not None,
             )
             for path, field in spec.fields.items()
-            if field.target_report_id is None or field.target_report_id in visible_ids
+            if all(step.target_report_id in visible_ids for step in field.relations)
         }
         catalog[key] = ReportSpec(key, spec.report, fields)
     return catalog
