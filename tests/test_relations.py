@@ -214,17 +214,10 @@ class MultiValuedRelationTests(EngineTests):
     def test_multi_valued_paths_cannot_order_rows(self):
         from django.core.exceptions import ValidationError
 
-        definition = validate_definition(
-            order_payload(
-                ordering=[
-                    {
-                        "field": "customer__pets__name",
-                        "direction": "asc",
-                    }
-                ]
-            ),
-            self.catalog,
-        )
-
         with self.assertRaises(ValidationError):
-            build_queryset(definition, self.catalog, self.request)
+            validate_definition(
+                order_payload(
+                    ordering=[{"field": "customer__pets__name", "direction": "asc"}]
+                ),
+                self.catalog,
+            )

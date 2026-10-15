@@ -20,13 +20,13 @@ Completed increments
 - Authorized Count, Sum and Average summaries with up to three grouping fields,
   bounded source/output rows, saved definitions and CSV (``0.1.0a7`` candidate;
   see :doc:`querying`).
+- Reverse ForeignKey/OneToOne and ManyToMany paths up to two relationship hops,
+  with scoped related-row policies, existential filters and bounded one-row-per-root
+  output (see :doc:`relationship-design`).
 
 Next scoped increments
 ----------------------
 
-#. **More relationships:** add reverse ForeignKey and ManyToMany paths with explicit
-   related-row policies and one-row-per-root results. The proposed contract is in
-   :doc:`relationship-design`; it is not implemented in the current package.
 #. **Visual exploration:** a diagram derived only from the authorized catalog,
    useful alongside the form rather than necessary to execute a report.
 

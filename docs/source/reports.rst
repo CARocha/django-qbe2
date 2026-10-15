@@ -56,18 +56,18 @@ Do not return a list, a slice, or a ``values()``/``values_list()`` projection. T
 engine applies authorized conditions, ordering, projection and report limits later.
 An invalid policy return raises a configuration error.
 
-Forward relationships
----------------------
+Relationship paths
+------------------
 
-Paths may be local scalar fields or one forward ForeignKey/OneToOne hop, such as
-``customer__name``. The target model and the terminal field must also be registered.
-ManyToMany, reverse relations, generic relations and multiple hops are unsupported.
-Forward ForeignKey ``to_field`` is supported, using the referenced target key.
+Paths may traverse up to two registered ForeignKey, OneToOne or ManyToMany
+relationships in either direction, for example ``customer__name`` or
+``customer__pets__name``. Generic relations are unsupported. A field path may
+contain at most one multi-valued edge. Forward ForeignKey ``to_field`` uses the
+referenced target key.
 
-When a relationship is used in a column, filter or ordering, its target row must
-be inside the target report's policy. A root row referring to a disallowed target
-is excluded entirely. A nullable relationship can remain when it is null; the
-projected related cell then displays an empty value.
-
-This rule is shared by HTML and CSV. Hiding a control in the browser does not
-provide authorization: posted definitions are revalidated on every request.
+Each report along the path must be visible to the user and its
+``get_queryset(request)`` policy scopes the related objects. This applies to HTML,
+CSV, saved queries and shared queries. Multi-valued paths can be selected and
+filtered, but cannot be used for row ordering, summary grouping or numeric summary
+metrics. See :doc:`relationship-design` for collection formatting, existential
+filter behavior and the related-value limit.

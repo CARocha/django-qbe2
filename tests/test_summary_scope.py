@@ -204,7 +204,6 @@ class MultiValuedSummaryScopeTests(TestCase):
         from django.test import RequestFactory
 
         from django_qbe2.catalog import get_catalog
-        from django_qbe2.engine import build_summary_source
         from tests.fixtures import grant_view, make_orders, make_staff
         from tests.models import Customer, Order, Pet, Tag
         from tests.test_summary_validation import summary_payload
@@ -217,12 +216,10 @@ class MultiValuedSummaryScopeTests(TestCase):
         request = RequestFactory().get("/")
         request.user = user
         catalog = get_catalog(request)
-        definition = validate_definition(
-            summary_payload(group_by=["customer__pets__name"]), catalog
-        )
-
         with self.assertRaises(ValidationError):
-            build_summary_source(definition, catalog, request)
+            validate_definition(
+                summary_payload(group_by=["customer__pets__name"]), catalog
+            )
 
     @skipUnless(connection.vendor == "postgresql", "PostgreSQL DISTINCT ON contract")
     def test_canonical_source_preserves_distinct_on_policy(self):

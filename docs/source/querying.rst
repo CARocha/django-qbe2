@@ -81,7 +81,7 @@ see that field. QBE's configuration checks do not evaluate these callables.
 Pagination and ordering
 -----------------------
 
-Choose ascending or descending ordering for permitted fields. A primary-key
+Choose ascending or descending ordering for single-valued fields. A primary-key
 ordering tiebreaker makes pages stable for a fixed dataset. Pages are separate
 reads, not snapshots: concurrent writes may change later pages.
 
@@ -96,6 +96,9 @@ CSV behavior
 The CSV button exports all matching rows up to the report cap, not only the
 current page. For a Summary report it exports completed groups and calculations,
 ordered exactly like the preview. Column order, row policies and related-row checks match HTML.
+Multi-valued report columns are joined into one cell per root row, in related
+primary-key order. The related-value limit applies to HTML pages and the complete
+CSV; when exceeded, CSV returns an error before streaming begins.
 UTF-8 text supports Unicode, quotes and embedded newlines. Dates/times use ISO
 format, decimals preserve precision, booleans use ``true``/``false``, and null
 becomes an empty cell.

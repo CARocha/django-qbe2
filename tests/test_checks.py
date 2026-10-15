@@ -16,7 +16,7 @@ class CheckTests(SimpleTestCase):
             (("owner",), {}, "E003"),
             (("customer__name",), {}, "E004"),
             (("number",), {"missing": "Label"}, "E005"),
-            (("owner__username__x",), {}, "E003"),
+            (("owner__username__x",), {}, "E004"),
         ):
             with (
                 self.subTest(fields=fields),
@@ -34,7 +34,7 @@ class CheckTests(SimpleTestCase):
                 register(InvalidReport)
                 self.assertEqual(check_reports()[0].id, f"django_qbe2.{expected}")
 
-    def test_reverse_relations_are_rejected(self):
+    def test_reverse_relations_require_a_registered_target_report(self):
         from django_qbe2.checks import check_reports
         from django_qbe2.registry import Report, register
 
@@ -48,4 +48,4 @@ class CheckTests(SimpleTestCase):
                     return Customer.objects.all()
 
             register(ReverseReport)
-            self.assertEqual(check_reports()[0].id, "django_qbe2.E003")
+            self.assertEqual(check_reports()[0].id, "django_qbe2.E004")

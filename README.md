@@ -118,12 +118,13 @@ storage, sharing and current-user authorization rules.
 - Saved definitions, private by default, with explicit reader/copy sharing.
 - Bounded nested AND/OR/NOT groups, ascending/descending order and stable pagination.
 - Grouped or ungrouped Count, Sum and Average reports over authorized source rows.
-- One forward ForeignKey/OneToOne hop with related-row authorization.
+- Up to two relationship hops, including reverse and ManyToMany relations, with
+  explicit related-row authorization and bounded collection columns.
 - Bounded CSV streaming, exact decimals, Unicode and safe text formula handling.
 - Django Admin styling, light/dark modes and responsive, keyboard-accessible controls.
 
-ManyToMany, inverse relationships, database-native aggregates, arbitrary joins,
-multi-database selection, Excel and the visual diagram are later work.
+Database-native aggregates, arbitrary joins, multi-database selection, Excel and
+the visual diagram are later work.
 CSV uses a synchronous streaming iterator intended for WSGI deployment.
 See the [public documentation](https://github.com/CARocha/django-qbe2/blob/main/docs/README.md) for installation, row policies,
 settings, API reference and troubleshooting. Sources are plain English
