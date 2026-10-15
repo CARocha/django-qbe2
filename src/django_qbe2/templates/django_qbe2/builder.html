@@ -55,8 +55,7 @@
       {% if form.mode.value == "summary" %}
       {{ form.summary_ordering.management_form }}{{ form.summary_ordering.non_form_errors }}
       <div id="summary-ordering-rows">{% for row in form.summary_ordering %}<div class="qbe-row">{{ row.as_div }}</div>{% endfor %}</div>
-      <button type="button" class="button qbe-add-row" data-prefix="summary_ordering" data-added-message="{% translate 'Ordering added' %}" hidden>{% translate "Add ordering" %}</button>
-      <template id="summary_ordering-empty-form"><div class="qbe-row">{{ form.summary_ordering.empty_form.as_div }}</div></template>
+      <button type="submit" name="action" value="add_summary_ordering" class="button qbe-server-add" formnovalidate>{% translate "Add ordering" %}</button>
       {% else %}
       {{ form.ordering.management_form }}{{ form.ordering.non_form_errors }}
       <div id="ordering-rows">{% for row in form.ordering %}<div class="qbe-row">{{ row.as_div }}</div>{% endfor %}</div>

@@ -28,7 +28,7 @@ from django_qbe2.group_forms import (
 from django_qbe2.limits import get_limits
 from django_qbe2.saved import get_saved_query
 from django_qbe2.saved_forms import SavedQueryNameForm
-from django_qbe2.summary_forms import compact_metrics
+from django_qbe2.summary_forms import compact_metrics, compact_summary_ordering
 from django_qbe2.validation import validate_definition
 
 logger = logging.getLogger(__name__)
@@ -232,7 +232,12 @@ def summary_builder_action(request, catalog, saved_query):
             report_id = data.get("report")
             fields = catalog[report_id].fields if report_id in catalog else {}
             data.setlist("group_by", [])
-            _replace_formset(data, "ordering", [], limits.max_ordering)
+            _replace_formset(
+                data,
+                "ordering",
+                [{"field": "", "direction": "asc"}] if mode == "rows" else [],
+                limits.max_ordering,
+            )
             _replace_formset(data, "summary_ordering", [], limits.max_ordering)
             _replace_formset(
                 data,
@@ -265,12 +270,36 @@ def summary_builder_action(request, catalog, saved_query):
                     "mode": "summary",
                 }
             )
+        elif action == "add_summary_ordering":
+            form = QueryBuilderForm(data, catalog=catalog, structure_only=True)
+            if not form.groups.is_valid():
+                raise ValidationError(_("Correct the conditions below."))
+            validate_structure(form.groups.cleaned_data, limits)
+            data = compact_summary_ordering(
+                data, form.summary_ordering, limits.max_ordering
+            )
+            count = int(data["summary_ordering-TOTAL_FORMS"])
+            if not count or data.get(f"summary_ordering-{count - 1}-target"):
+                if count >= limits.max_ordering:
+                    raise ValidationError(_("The ordering limit was reached."))
+                data.update(
+                    {
+                        f"summary_ordering-{count}-target": "",
+                        f"summary_ordering-{count}-direction": "asc",
+                        "summary_ordering-TOTAL_FORMS": str(count + 1),
+                    }
+                )
+            data["mode"] = "summary"
         else:
             raise ValidationError(_("Choose an available builder action."))
         form = QueryBuilderForm(data, catalog=catalog, structure_only=True)
         form.is_valid()
         if action == "add_metric" and form.metrics.forms:
             form.metrics.forms[-1].fields["function"].widget.attrs["autofocus"] = True
+        if action == "add_summary_ordering" and form.summary_ordering.forms:
+            form.summary_ordering.forms[-1].fields["target"].widget.attrs[
+                "autofocus"
+            ] = True
     except (ValidationError, ValueError) as error:
         form = QueryBuilderForm(data, catalog=catalog, structure_only=True)
         form.is_valid()
@@ -307,7 +336,11 @@ def results_view(request: HttpRequest):
         "add_group",
     ):
         return builder_action(request, catalog, saved_query)
-    if request.POST.get("action") in ("apply_mode", "add_metric"):
+    if request.POST.get("action") in (
+        "apply_mode",
+        "add_metric",
+        "add_summary_ordering",
+    ):
         return summary_builder_action(request, catalog, saved_query)
     form = query_form(request, catalog)
     if not form.is_valid() or request.POST.get("action") == "edit":

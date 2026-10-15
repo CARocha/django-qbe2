@@ -87,7 +87,7 @@
     if (prefix === "metrics") return;
     const total = document.getElementById(`id_${prefix}-TOTAL_FORMS`);
     const maximum = Number(document.getElementById(`id_${prefix}-MAX_NUM_FORMS`).value);
-    const containers = {filters: "filter-rows", ordering: "ordering-rows", metrics: "metric-rows", summary_ordering: "summary-ordering-rows"};
+    const containers = {filters: "filter-rows", ordering: "ordering-rows", metrics: "metric-rows"};
     const container = document.getElementById(containers[prefix]);
     button.hidden = false;
     button.disabled = Number(total.value) >= maximum;

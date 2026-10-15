@@ -100,3 +100,42 @@ def compact_metrics(data, formset, maximum):
         for key, value in row.items():
             compacted[f"metrics-{index}-{key}"] = value
     return compacted
+
+
+def compact_summary_ordering(data, formset, maximum):
+    management = formset.management_form
+    if not management.is_valid():
+        raise ValidationError(_("Invalid ordering controls."))
+    total = management.cleaned_data["TOTAL_FORMS"]
+    initial = management.cleaned_data["INITIAL_FORMS"]
+    if not 0 <= initial <= total <= maximum:
+        raise ValidationError(_("Invalid ordering controls."))
+    rows = []
+    for index in range(total):
+        if forms.CheckboxInput().value_from_datadict(
+            data, {}, f"summary_ordering-{index}-DELETE"
+        ):
+            continue
+        rows.append(
+            {
+                key: data[f"summary_ordering-{index}-{key}"]
+                for key in ("target", "direction")
+                if f"summary_ordering-{index}-{key}" in data
+            }
+        )
+    compacted = data.copy()
+    for key in list(compacted):
+        if key.startswith("summary_ordering-"):
+            del compacted[key]
+    compacted.update(
+        {
+            "summary_ordering-TOTAL_FORMS": str(len(rows)),
+            "summary_ordering-INITIAL_FORMS": "0",
+            "summary_ordering-MIN_NUM_FORMS": "0",
+            "summary_ordering-MAX_NUM_FORMS": str(maximum),
+        }
+    )
+    for index, row in enumerate(rows):
+        for key, value in row.items():
+            compacted[f"summary_ordering-{index}-{key}"] = value
+    return compacted

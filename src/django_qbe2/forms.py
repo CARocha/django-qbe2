@@ -420,7 +420,8 @@ def payload_form_data(payload: object, *, page_size: str) -> QueryDict:
         payload = {**payload, "groups": groups, "filters": filters}
     if payload.get("version") == 3:
         summary_ordering = []
-        for row in payload.get("ordering", []):
+        ordering = payload.get("ordering", [])
+        for row in ordering if isinstance(ordering, list) else []:
             if not isinstance(row, dict):
                 continue
             target_type = row.get("type")

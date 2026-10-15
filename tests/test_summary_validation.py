@@ -146,6 +146,7 @@ class SummaryValidationTests(TestCase):
         for ordering in (
             [None],
             [{"type": "other", "id": "m1", "direction": "asc"}],
+            [{}],
             [{"type": "metric", "field": "active", "direction": "asc"}],
             [{"type": "metric", "id": "m2", "direction": "asc"}],
             [{"type": "metric", "id": ["m1"], "direction": "asc"}],

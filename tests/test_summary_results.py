@@ -120,6 +120,12 @@ class SummaryResultsViewTests(TestCase):
             {"definition": json.dumps(payload), "page_size": "50", **extra},
         )
 
+    def test_malformed_summary_ordering_returns_validation_response(self):
+        for ordering in (None, 1, False, [{}]):
+            with self.subTest(ordering=ordering):
+                response = self.post(summary_payload(ordering=ordering))
+                self.assertEqual(response.status_code, 400)
+
     def test_ungrouped_summary_renders_source_count_and_metric_labels(self):
         payload = summary_payload(
             metrics=[

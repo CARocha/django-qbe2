@@ -101,6 +101,10 @@ class SummaryBuilderActionTests(TestCase):
         self.assertEqual(form.filters.forms[0]["value"].value(), "unfinished")
         self.assertEqual(form.metrics.forms[0]["function"].value(), "count")
         self.assertContains(response, "resets columns, calculations and ordering")
+        self.assertContains(
+            response,
+            'name="action" value="add_summary_ordering"',
+        )
 
     def test_apply_rows_preserves_conditions_and_restores_default_columns(self):
         data = payload_form_data(
@@ -118,6 +122,8 @@ class SummaryBuilderActionTests(TestCase):
         self.assertEqual(form["mode"].value(), "rows")
         self.assertEqual(form.filters.forms[0]["value"].value(), "unfinished")
         self.assertEqual(form["columns"].value(), ["number", "total"])
+        self.assertEqual(form.ordering.total_form_count(), 1)
+        self.assertEqual(form.ordering.forms[0]["field"].value(), "")
 
     @override_settings(QBE2_MAX_METRICS=2)
     def test_add_metric_reclaims_deleted_capacity_and_keeps_stable_ids(self):
@@ -152,3 +158,34 @@ class SummaryBuilderActionTests(TestCase):
             response = self.post(data)
         self.assertEqual(response.status_code, 400)
         self.assertContains(response, "Invalid calculation controls", status_code=400)
+
+    def test_add_summary_ordering_preserves_existing_order_and_adds_a_row(self):
+        payload = summary_payload(
+            group_by=["active"],
+            ordering=[{"type": "group", "field": "active", "direction": "asc"}],
+        )
+        data = payload_form_data(payload, page_size="50")
+        data["action"] = "add_summary_ordering"
+        response = self.post(data)
+        self.assertEqual(response.status_code, 200)
+        form = response.context["form"]
+        self.assertEqual(form.summary_ordering.total_form_count(), 2)
+        self.assertEqual(
+            form.summary_ordering.forms[0]["target"].value(), "group:active"
+        )
+        self.assertEqual(form.summary_ordering.forms[1]["target"].value(), "")
+
+    @override_settings(QBE2_MAX_ORDERING=1)
+    def test_add_summary_ordering_reclaims_deleted_capacity(self):
+        payload = summary_payload(
+            group_by=["active"],
+            ordering=[{"type": "group", "field": "active", "direction": "asc"}],
+        )
+        data = payload_form_data(payload, page_size="50")
+        data["summary_ordering-0-DELETE"] = "on"
+        data["action"] = "add_summary_ordering"
+        response = self.post(data)
+        self.assertEqual(response.status_code, 200)
+        form = response.context["form"]
+        self.assertEqual(form.summary_ordering.total_form_count(), 1)
+        self.assertEqual(form.summary_ordering.forms[0]["target"].value(), "")

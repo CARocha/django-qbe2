@@ -22,9 +22,18 @@ class SummaryResult:
     source_count: int
 
 
-def _precision(field: models.Field, source_limit: int) -> int:
-    declared = field.max_digits if isinstance(field, models.DecimalField) else 20
-    return max(28, declared + len(str(max(1, source_limit))) + 4)
+def _precision(field: models.Field, source_limit: int, *, output_scale: int = 0) -> int:
+    if isinstance(field, models.DecimalField):
+        decimal_places = field.decimal_places
+        integer_digits = field.max_digits - decimal_places
+    else:
+        decimal_places = 0
+        integer_digits = 20
+    division_guard = len(str(max(1, source_limit)))
+    return max(
+        28,
+        integer_digits + max(decimal_places, output_scale) + division_guard + 4,
+    )
 
 
 def _typed_group(values: tuple[Scalar, ...]) -> tuple[tuple[type, Scalar], ...]:
@@ -57,7 +66,15 @@ def accumulate_summary(
     if not definition.group_by:
         groups[_typed_group(())] = ((), {})
     for record in records:
-        group_values = tuple(record[path] for path in definition.group_by)
+        group_values = []
+        for path in definition.group_by:
+            value = record[path]
+            field = report.fields[path].django_field
+            if isinstance(field, (models.IntegerField, models.DecimalField)):
+                if value is not None:
+                    _validated_numeric(value, field)
+            group_values.append(value)
+        group_values = tuple(group_values)
         key = _typed_group(group_values)
         _values, states = groups.setdefault(key, (group_values, {}))
         for metric in definition.metrics:
@@ -99,7 +116,7 @@ def accumulate_summary(
                 )
                 quantum = Decimal(1).scaleb(-scale)
                 with localcontext() as context:
-                    context.prec = _precision(field, source_limit)
+                    context.prec = _precision(field, source_limit, output_scale=scale)
                     row[key] = (
                         Decimal(state["sum"]) / Decimal(state["count"])
                     ).quantize(quantum, rounding=ROUND_HALF_EVEN)

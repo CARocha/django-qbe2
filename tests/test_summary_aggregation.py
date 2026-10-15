@@ -1,6 +1,8 @@
+from dataclasses import replace
 from decimal import Decimal, getcontext
 
 from django.core.exceptions import ValidationError
+from django.db import models
 from django.test import RequestFactory, TestCase
 
 from django_qbe2.catalog import get_catalog
@@ -108,6 +110,40 @@ class SummaryAggregationTests(TestCase):
             Decimal("0.007812"),
         )
 
+    def test_average_keeps_precision_for_large_decimal_fields(self):
+        definition = self.definition(
+            [{"id": "m1", "function": "avg", "field": "total"}]
+        )
+        total_field = self.report.fields["total"]
+        report = replace(
+            self.report,
+            fields={
+                **self.report.fields,
+                "total": replace(
+                    total_field,
+                    django_field=models.DecimalField(max_digits=30, decimal_places=0),
+                ),
+            },
+        )
+        base = Decimal("100000000000000000000000000000")
+        base_plus_one = Decimal("100000000000000000000000000001")
+        records = [{"total": base_plus_one}] * 50 + [{"total": base}] * 9_949
+
+        from django_qbe2.aggregation import accumulate_summary
+
+        result = accumulate_summary(
+            records,
+            definition,
+            report,
+            source_count=len(records),
+            source_limit=10_000,
+        )
+
+        self.assertEqual(
+            result.rows[0]["metric:m1"],
+            Decimal("100000000000000000000000000000.005001"),
+        )
+
     def test_empty_sources_and_nonfinite_values_are_controlled(self):
         definition = self.definition(
             [
@@ -123,6 +159,13 @@ class SummaryAggregationTests(TestCase):
         )
         with self.assertRaisesRegex(ValidationError, "finite"):
             self.accumulate([{"total": Decimal("NaN"), "quantity": 1}], definition)
+
+        grouped = self.definition(
+            [{"id": "m1", "function": "count", "field": None}],
+            group_by=["total"],
+        )
+        with self.assertRaisesRegex(ValidationError, "finite"):
+            self.accumulate([{"total": Decimal("Infinity")}], grouped)
 
     def test_grouped_empty_source_has_no_rows(self):
         definition = self.definition(

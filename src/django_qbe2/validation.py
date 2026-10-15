@@ -237,12 +237,16 @@ def validate_summary_definition(
         if not isinstance(row, dict):
             invalid("ordering", "Choose a valid summary ordering.")
         ordering_type = row.get("type")
+        if ordering_type not in ("group", "metric"):
+            invalid("ordering", "Choose a valid summary ordering.")
         expected = (
             {"type", "field", "direction"}
             if ordering_type == "group"
-            else {"type", "id", "direction"}
-            if ordering_type == "metric"
-            else set()
+            else {
+                "type",
+                "id",
+                "direction",
+            }
         )
         if set(row) != expected:
             invalid("ordering", "Choose a valid summary ordering.")
