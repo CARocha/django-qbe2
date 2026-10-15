@@ -5,7 +5,7 @@ from unittest.mock import patch
 
 from django.core.exceptions import ValidationError
 from django.db import connection
-from django.test import TestCase, override_settings
+from django.test import TransactionTestCase, override_settings
 from django.test.utils import CaptureQueriesContext
 from django.urls import reverse
 
@@ -14,7 +14,7 @@ from tests.models import Customer, Order
 from tests.test_summary_validation import summary_payload
 
 
-class SummaryExportTests(TestCase):
+class SummaryExportTests(TransactionTestCase):
     def setUp(self):
         self.user = make_staff("summary-export")
         grant_view(self.user, Order, Customer)

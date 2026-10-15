@@ -69,7 +69,15 @@ class SummaryExecutionTests(TestCase):
         )
         with CaptureQueriesContext(connection) as queries:
             self.execute(definition)
-        sql = queries[-1]["sql"].lower()
+        business_queries = [
+            query["sql"]
+            for query in queries
+            if query["sql"].lstrip().upper().startswith("SELECT")
+            and "SET_CONFIG" not in query["sql"].upper()
+            and "STATEMENT_TIMEOUT" not in query["sql"].upper()
+        ]
+        self.assertEqual(len(business_queries), 1)
+        sql = business_queries[0].lower()
         self.assertIn("active", sql)
         self.assertIn("total", sql)
         self.assertNotIn("created_at", sql)
@@ -84,7 +92,15 @@ class SummaryExecutionTests(TestCase):
         with CaptureQueriesContext(connection) as queries:
             result = self.execute(definition)
         self.assertEqual(before, list(Order.objects.values().order_by("pk")))
-        statements = [query["sql"].lstrip().upper() for query in queries]
+        statements = [
+            query["sql"].lstrip().upper()
+            for query in queries
+            if "SET_CONFIG" not in query["sql"].upper()
+            and "STATEMENT_TIMEOUT" not in query["sql"].upper()
+            and not query["sql"].lstrip().upper().startswith(
+                ("SAVEPOINT", "RELEASE SAVEPOINT", "ROLLBACK TO SAVEPOINT")
+            )
+        ]
         self.assertTrue(statements)
         self.assertTrue(all(statement.startswith("SELECT") for statement in statements))
         self.assertEqual(result.source_count, 2)
