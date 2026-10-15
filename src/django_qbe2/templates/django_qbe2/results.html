@@ -5,15 +5,20 @@
 <div class="qbe-workspace">
   <p><a href="{% url 'django_qbe2:saved_list' %}">{% translate "Saved queries" %}</a></p>
   <div class="qbe-results-heading">
-    <p>{% blocktranslate with count=page.total_limited %}{{ count }} matching rows{% endblocktranslate %}</p>
-    {% if page.truncated %}<p class="qbe-warning" role="status">{% blocktranslate %}Results limited to {{ limit }} rows. Refine your conditions to narrow the report.{% endblocktranslate %}</p>{% endif %}
-    {% if not page.total_limited %}<p role="status">{% translate "Edit the report to adjust its conditions." %} {% translate "Your report's access policy also limits which rows you can see." %}</p>{% endif %}
+    {% if is_summary %}
+      <p>{% blocktranslate count count=source_count %}{{ count }} source record{% plural %}{{ count }} source records{% endblocktranslate %}</p>
+      {% if is_grouped %}<p>{% blocktranslate count count=group_count %}{{ count }} group{% plural %}{{ count }} groups{% endblocktranslate %}</p>{% endif %}
+    {% else %}
+      <p>{% blocktranslate with count=page.total_limited %}{{ count }} matching rows{% endblocktranslate %}</p>
+    {% endif %}
+    {% if page.truncated %}<p class="qbe-warning" role="status">{% if is_summary %}{% blocktranslate %}Results limited to {{ limit }} groups. Every displayed calculation is complete; refine your conditions to see fewer groups.{% endblocktranslate %}{% else %}{% blocktranslate %}Results limited to {{ limit }} rows. Refine your conditions to narrow the report.{% endblocktranslate %}{% endif %}</p>{% endif %}
+    {% if not page.total_limited %}<p role="status">{% if is_summary %}{% translate "No groups match your conditions." %}{% else %}{% translate "Edit the report to adjust its conditions." %} {% translate "Your report's access policy also limits which rows you can see." %}{% endif %}</p>{% endif %}
   </div>
   <div class="module qbe-table-scroll" tabindex="0" role="region" aria-label="{% translate 'Report results table' %}">
     <table>
       <caption class="visually-hidden">{% translate "Report results" %}</caption>
       <thead><tr>{% for label in page.labels %}<th scope="col">{{ label }}</th>{% endfor %}</tr></thead>
-      <tbody>{% for row in table_rows %}<tr>{% for cell in row %}<td>{{ cell|default_if_none:"—" }}</td>{% endfor %}</tr>{% empty %}<tr><td colspan="{{ page.labels|length }}">{% translate "No rows match your conditions." %}</td></tr>{% endfor %}</tbody>
+      <tbody>{% for row in table_rows %}<tr>{% for cell in row %}<td>{{ cell|default_if_none:"—" }}</td>{% endfor %}</tr>{% empty %}<tr><td colspan="{{ page.labels|length }}">{% if is_summary %}{% translate "No groups match your conditions." %}{% else %}{% translate "No rows match your conditions." %}{% endif %}</td></tr>{% endfor %}</tbody>
     </table>
   </div>
   <form method="post" action="{% url 'django_qbe2:results' %}" class="qbe-pagination">
@@ -30,7 +35,7 @@
   {% if export_url %}<form method="post" action="{{ export_url }}" class="qbe-export">
     {% csrf_token %}<input type="hidden" name="definition" value="{{ definition_json }}">
     <button type="submit" class="button default">{% translate "Export CSV" %}</button>
-    <p class="help">{% blocktranslate %}Exports all matching rows, up to {{ limit }} rows, in the same order.{% endblocktranslate %}</p>
+    <p class="help">{% if is_summary %}{% blocktranslate %}Exports complete calculations for up to {{ limit }} groups, in the same order.{% endblocktranslate %}{% else %}{% blocktranslate %}Exports all matching rows, up to {{ limit }} rows, in the same order.{% endblocktranslate %}{% endif %}</p>
   </form>{% endif %}
   <section class="module qbe-section qbe-save-section">
     <h2>{% translate "Save query" %}</h2>

@@ -1,14 +1,20 @@
+from __future__ import annotations
+
 from contextlib import contextmanager
 from dataclasses import dataclass
 from math import ceil
+from typing import TYPE_CHECKING
 
 from django.core.exceptions import ValidationError
 from django.db import connections, transaction
 from django.db.models import QuerySet
 
 from django_qbe2.catalog import ReportSpec
-from django_qbe2.definitions import QueryDefinition, Scalar
+from django_qbe2.definitions import QueryDefinition, Scalar, SummaryDefinition
 from django_qbe2.limits import get_limits
+
+if TYPE_CHECKING:
+    from django_qbe2.aggregation import SummaryResult
 
 STATEMENT_TIMEOUT_MS = 5000
 
@@ -80,4 +86,34 @@ def get_page(
         total,
         num_pages,
         truncated,
+    )
+
+
+def execute_summary(
+    queryset: QuerySet,
+    definition: SummaryDefinition,
+    catalog: dict[str, ReportSpec],
+) -> SummaryResult:
+    from django_qbe2.aggregation import accumulate_summary
+
+    limits = get_limits()
+    paths = list(definition.group_by)
+    paths.extend(
+        metric.field
+        for metric in definition.metrics
+        if metric.field is not None and metric.field not in paths
+    )
+    selected = paths or [queryset.model._meta.pk.name]
+    with query_timeout(using=queryset.db):
+        records = list(queryset.values(*selected)[: limits.max_aggregate_rows + 1])
+    if len(records) > limits.max_aggregate_rows:
+        raise ValidationError(
+            "Too many source records. Refine the report conditions and try again."
+        )
+    return accumulate_summary(
+        records,
+        definition,
+        catalog[definition.report],
+        source_count=len(records),
+        source_limit=limits.max_aggregate_rows,
     )

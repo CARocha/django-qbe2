@@ -12,10 +12,12 @@ from django.utils.translation import gettext as _
 from django.views.decorators.http import require_GET, require_POST
 
 from django_qbe2.access import require_qbe_access
+from django_qbe2.aggregation import paginate_summary
 from django_qbe2.catalog import get_catalog
 from django_qbe2.choices import choice_value
-from django_qbe2.engine import build_queryset
-from django_qbe2.execution import get_page
+from django_qbe2.definitions import SummaryDefinition
+from django_qbe2.engine import build_queryset, build_summary_source
+from django_qbe2.execution import execute_summary, get_page
 from django_qbe2.exports import csv_response
 from django_qbe2.forms import OPERATOR_LABELS, QueryBuilderForm, payload_form_data
 from django_qbe2.group_forms import (
@@ -110,6 +112,14 @@ def query_form(request, catalog, data=None):
             original,
             page_size=source.get("page_size", str(get_limits().page_size)),
         )
+        if isinstance(original, dict) and original.get("version") == 3:
+            report_id = original.get("report")
+            fallback = (
+                next(iter(catalog.get(report_id).fields), "")
+                if report_id in catalog
+                else ""
+            )
+            data.setlist("columns", [fallback] if fallback else [])
     report_id = data.get("report")
     if report_id and report_id not in catalog:
         raise Http404("Report not available.")
@@ -228,14 +238,26 @@ def results_view(request: HttpRequest):
         )
     try:
         page_number = int(request.POST.get("page", "1"))
-        queryset = build_queryset(form.definition, catalog, request)
-        page = get_page(
-            queryset,
-            form.definition,
-            catalog,
-            page=page_number,
-            page_size=form.cleaned_data["page_size"],
-        )
+        summary_result = None
+        if isinstance(form.definition, SummaryDefinition):
+            queryset = build_summary_source(form.definition, catalog, request)
+            summary_result = execute_summary(queryset, form.definition, catalog)
+            page = paginate_summary(
+                summary_result,
+                form.definition,
+                page=page_number,
+                page_size=form.cleaned_data["page_size"],
+                max_rows=get_limits().max_rows,
+            )
+        else:
+            queryset = build_queryset(form.definition, catalog, request)
+            page = get_page(
+                queryset,
+                form.definition,
+                catalog,
+                page=page_number,
+                page_size=form.cleaned_data["page_size"],
+            )
     except (ValidationError, ValueError) as error:
         messages = (
             error.messages
@@ -249,13 +271,35 @@ def results_view(request: HttpRequest):
             {**builder_context(request, catalog, form), "saved_query": saved_query},
             status=400,
         )
-    choice_labels = {
-        path: {
-            value: escape(label)
-            for value, label in catalog[form.definition.report].fields[path].choices
+    is_summary = isinstance(form.definition, SummaryDefinition)
+    if is_summary:
+        output_columns = summary_result.columns
+        choice_labels = {
+            column.key: {value: escape(label) for value, label in column.choices}
+            for column in output_columns
         }
-        for path in form.definition.columns
-    }
+        table_rows = [
+            tuple(
+                choice_labels[column.key].get(row[column.key], row[column.key])
+                for column in output_columns
+            )
+            for row in page.rows
+        ]
+    else:
+        choice_labels = {
+            path: {
+                value: escape(label)
+                for value, label in catalog[form.definition.report].fields[path].choices
+            }
+            for path in form.definition.columns
+        }
+        table_rows = [
+            tuple(
+                choice_labels[path].get(row[path], row[path])
+                for path in form.definition.columns
+            )
+            for row in page.rows
+        ]
     context = {
         **admin.site.each_context(request),
         "title": _("Report results"),
@@ -267,15 +311,13 @@ def results_view(request: HttpRequest):
             initial={"name": saved_query.name if saved_query else ""}
         ),
         "page": page,
+        "is_summary": is_summary,
+        "is_grouped": is_summary and bool(form.definition.group_by),
+        "source_count": summary_result.source_count if is_summary else None,
+        "group_count": len(summary_result.rows) if is_summary else None,
         "definition_json": json.dumps(form.payload),
         "limit": get_limits().max_rows,
-        "table_rows": [
-            tuple(
-                choice_labels[path].get(row[path], row[path])
-                for path in form.definition.columns
-            )
-            for row in page.rows
-        ],
+        "table_rows": table_rows,
         "previous_page": page.page - 1,
         "next_page": page.page + 1,
     }

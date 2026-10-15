@@ -286,7 +286,7 @@ def payload_form_data(payload: object, *, page_size: str) -> QueryDict:
     )
     data["page_size"] = page_size
     limits = get_limits()
-    if payload.get("version") == 2:
+    if payload.get("version") in (2, 3):
         try:
             groups, filters = flatten_where(payload.get("where"), limits)
         except ValidationError:
