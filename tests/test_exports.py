@@ -62,6 +62,56 @@ class ExportTests(TestCase):
             self.client.get(reverse("django_qbe2:export")).status_code, 405
         )
 
+    def test_multivalued_columns_are_exported_as_stable_joined_values(self):
+        from tests.fixtures import grant_view
+        from tests.models import Pet
+
+        grant_view(self.alice, Pet)
+        for cache in ("_perm_cache", "_user_perm_cache", "_group_perm_cache"):
+            if hasattr(self.alice, cache):
+                delattr(self.alice, cache)
+        customer = self.orders[0].customer
+        Pet.objects.create(customer=customer, name="Milo")
+        Pet.objects.create(customer=customer, name="Luna")
+        self.client.force_login(self.alice)
+        payload = order_payload(columns=["number", "customer__pets__name"])
+        response = self.client.post(
+            reverse("django_qbe2:export"),
+            {"definition": json.dumps(payload), "page_size": "50"},
+        )
+        self.assertEqual(response.status_code, 200)
+        rows = list(
+            csv.reader(io.StringIO(b"".join(response.streaming_content).decode()))
+        )
+        self.assertEqual(rows[0], ["number", "name"])
+        self.assertEqual(rows[1][1], "Milo, Luna")
+
+    @override_settings(QBE2_MAX_RELATED_VALUES=1)
+    def test_related_value_limit_rejects_export_before_streaming(self):
+        from tests.fixtures import grant_view
+        from tests.models import Pet
+
+        grant_view(self.alice, Pet)
+        for cache in ("_perm_cache", "_user_perm_cache", "_group_perm_cache"):
+            if hasattr(self.alice, cache):
+                delattr(self.alice, cache)
+        customer = self.orders[0].customer
+        Pet.objects.create(customer=customer, name="Milo")
+        Pet.objects.create(customer=customer, name="Luna")
+        self.client.force_login(self.alice)
+        response = self.client.post(
+            reverse("django_qbe2:export"),
+            {
+                "definition": json.dumps(
+                    order_payload(columns=["number", "customer__pets__name"])
+                ),
+                "page_size": "50",
+            },
+        )
+        self.assertEqual(response.status_code, 400)
+        self.assertFalse(response.streaming)
+        self.assertContains(response, "Too many related values", status_code=400)
+
 
 class StreamResourceTests(TransactionTestCase):
     setUp = test_engine.EngineTests.setUp
