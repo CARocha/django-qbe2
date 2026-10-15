@@ -12,8 +12,10 @@ commits before editing. Do not repeat completed work or overwrite another contri
 - src/django_qbe2/ is the installable app; demo/ is a separate consumer;
   tests/ verifies the contract; docs/source/ contains the Sphinx sources.
 - The current app supports explicit registration, selected columns, typed AND/OR/NOT
-  condition groups, authorized Count/Sum/Average summaries, one forward FK/OneToOne
-  hop, stable bounded pagination and CSV.
+  condition groups, authorized Count/Sum/Average summaries, and up to two
+  ForeignKey/OneToOne/ManyToMany relationship hops in either direction. Multi-valued
+  paths support selected columns and existential filters with bounded one-row-per-root
+  values, stable pagination and CSV.
 - Declared model choices drive equality selectors and HTML labels. CSV, filters
   and ordering retain stored codes. Only equality validates membership; fragments
   and range thresholds may use values outside the choices. Preserve zero, false,
@@ -29,7 +31,7 @@ commits before editing. Do not repeat completed work or overwrite another contri
 - Default Admin registers SavedQuery only as navigation to the authorized QBE
   list. Never expose raw add/change/delete/history model routes or JSON editing;
   adding navigation must not bypass ownership or sharing policies.
-- Database-native aggregates, ManyToMany, reverse relations, arbitrary SQL,
+- Database-native aggregates, generic relations, arbitrary SQL,
   visual diagrams, multiple databases and ASGI-native streaming need separate work.
 - Runtime dependency is Django only. Documentation tools belong to the docs group,
   and test/lint tools belong to the dev group. Locked build/publishing tools belong
@@ -58,8 +60,9 @@ Do not add speculative abstractions or request-specific shared mutable state.
 - Never use eval, pickle or arbitrary client SQL. Do not commit real data or secrets.
 - Default budgets: 50 rows/page (maximum 200), 20 columns, 20 filters, 3 sort keys,
   10 condition groups and three condition levels including the root, 3 summary
-  group fields, 10 metrics, 10,000 summary source rows and 10,000 output rows;
-  PostgreSQL report statements time out after 5 seconds.
+  group fields, 10 metrics, 10,000 summary source rows and output rows, and 10,000
+  related values per result page or complete export; PostgreSQL report statements
+  time out after 5 seconds.
 - Escape text formulas in CSV and preserve numeric precision. Streaming targets
   synchronous WSGI; late failures abort the download and must release resources.
 
@@ -67,6 +70,11 @@ Group forms use bounded identifiers and parent links; reject cycles, disconnecte
 and unknown assignments. Only the unnegated AND root may be empty on execution.
 Add controls through server actions without executing reports; retain no-JavaScript
 operation. Existing saved definitions need no new migration for groups or summaries.
+
+Multi-valued filters use correlated existential predicates at the root level. Every
+related report needs view permission and its own request queryset policy. A path may
+contain at most one multi-valued edge. Multi-valued paths cannot be ordered, grouped
+or used as numeric summary metrics. Saved definition versions remain v1-v3.
 
 Summary v3 definitions contain exactly report, where, group_by, metrics and ordering
 plus version. Count uses no field; Sum/Average accept registered integer/decimal

@@ -8,7 +8,8 @@ may depend on a particular business app's field names.
 Completed increments
 --------------------
 
-- Explicit reports, typed AND filters, one forward relation hop, pagination and CSV.
+- Explicit reports, typed condition groups, authorized relationship paths, pagination
+  and CSV.
 - Python 3.13–3.14 and Django 6.0–6.1 compatibility, verified on SQLite/PostgreSQL.
 - Generic Django model-choice selectors and readable HTML labels.
 - Saved definitions with private defaults and explicit reader/copy sharing
@@ -18,7 +19,7 @@ Completed increments
 - Bounded AND/OR/NOT groups with versioned definitions and unchanged row policies
   (``0.1.0a6`` candidate; see :doc:`querying`).
 - Authorized Count, Sum and Average summaries with up to three grouping fields,
-  bounded source/output rows, saved definitions and CSV (``0.1.0a7`` candidate;
+  bounded source/output rows, saved definitions and CSV (``0.1.0a7``;
   see :doc:`querying`).
 - Reverse ForeignKey/OneToOne and ManyToMany paths up to two relationship hops,
   with scoped related-row policies, existential filters and bounded one-row-per-root

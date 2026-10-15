@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.1.0a8 — release candidate
 
 ### Added
 
@@ -15,7 +15,7 @@
 
 Saved definition versions remain unchanged; no package database migration is needed.
 
-## 0.1.0a7 — release candidate
+## 0.1.0a7 — 2026-10-14
 
 ### Added
 

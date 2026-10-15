@@ -18,11 +18,12 @@ The package is experimental, so follow release notes before upgrading.
 
    .. py:attribute:: fields
 
-      Nonempty tuple of unique scalar field paths. Local paths or one forward
-      FK/OneToOne hop are supported. Default: empty tuple.
+      Nonempty tuple of unique scalar field paths. Local paths or up to two
+      supported ForeignKey, OneToOne or ManyToMany hops are supported. Default:
+      empty tuple.
 
       Registered integer and decimal paths are automatically available to Summary
-      reports for Sum and Average. Every permitted path may be used for grouping;
+      reports for Sum and Average. Single-valued paths may be used for grouping;
       no aggregate-specific registration API is required.
 
    .. py:attribute:: field_labels
