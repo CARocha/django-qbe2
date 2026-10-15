@@ -18,7 +18,11 @@ from django_qbe2.engine import build_queryset
 from django_qbe2.execution import get_page
 from django_qbe2.exports import csv_response
 from django_qbe2.forms import OPERATOR_LABELS, QueryBuilderForm, payload_form_data
-from django_qbe2.group_forms import default_group_data, validate_structure
+from django_qbe2.group_forms import (
+    compact_controls,
+    default_group_data,
+    validate_structure,
+)
 from django_qbe2.limits import get_limits
 from django_qbe2.saved import get_saved_query
 from django_qbe2.saved_forms import SavedQueryNameForm
@@ -146,8 +150,9 @@ def builder_action(request, catalog, saved_query):
         )
         if not management.is_valid():
             raise ValidationError(_("Invalid condition controls."))
-        count = management.cleaned_data["TOTAL_FORMS"]
-        if count < 0 or count >= maximum:
+        data = compact_controls(data, form.groups, form.filters, removed, get_limits())
+        count = int(data[f"{prefix}-TOTAL_FORMS"])
+        if count >= maximum:
             raise ValidationError(_("The condition limit was reached."))
         if prefix == "groups":
             current = identity

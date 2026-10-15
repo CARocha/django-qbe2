@@ -145,7 +145,10 @@ condition. These are generic controls for the fields each report exposes.
 Add condition and Add group preserve entered values and refresh the builder;
 they do not execute the report. Parent group and Condition group selectors move
 controls between groups. Removing a group also removes its descendants on the
-next preview. The root cannot be removed. The controls work without JavaScript;
+next builder submission. A failed preview keeps the pending group removal
+separate from each condition's own deletion checkbox, so canceling it restores
+its conditions. Add actions reclaim removed controls before allocating new ones.
+The root cannot be removed. The controls work without JavaScript;
 JavaScript additionally arranges moved controls immediately and adapts value widgets.
 
 Group limits count the whole expression: by default 20 conditions, 10 groups

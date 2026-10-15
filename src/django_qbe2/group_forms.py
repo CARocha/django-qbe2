@@ -2,10 +2,22 @@
 
 from django import forms
 from django.core.exceptions import ValidationError
-from django.forms import formset_factory
+from django.forms import BaseFormSet, formset_factory
 from django.utils.translation import gettext_lazy as _
 
 from django_qbe2.limits import Limits
+
+
+class GroupedFilterFormSet(BaseFormSet):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.removed_groups = set()
+
+    def _should_delete_form(self, form):
+        # Implicit subtree removal must never alter the submitted checkbox state.
+        return form[
+            "group"
+        ].value() in self.removed_groups or super()._should_delete_form(form)
 
 
 class GroupForm(forms.Form):
@@ -213,3 +225,54 @@ def display_groups(groups, filters):
         if identity not in attached:
             root["children"].append(node)
     return root
+
+
+def compact_controls(data, groups, filters, removed, limits: Limits):
+    """Reclaim deleted controls while preserving unfinished active inputs."""
+    compacted = data.copy()
+    for prefix, formset, maximum, keys in (
+        ("groups", groups, limits.max_groups, ("id", "parent", "connector", "negated")),
+        (
+            "filters",
+            filters,
+            limits.max_filters,
+            ("group", "field", "operator", "value"),
+        ),
+    ):
+        management = formset.management_form
+        if not management.is_valid():
+            raise ValidationError(_("Invalid condition controls."))
+        total = management.cleaned_data["TOTAL_FORMS"]
+        initial = management.cleaned_data["INITIAL_FORMS"]
+        if not 0 <= initial <= total <= maximum:
+            raise ValidationError(_("The condition limit was exceeded."))
+        rows = []
+        for index in range(total):
+            identity = (
+                data.get(f"{prefix}-{index}-id")
+                if prefix == "groups"
+                else data.get(f"{prefix}-{index}-group") or "root"
+            )
+            deleted = forms.CheckboxInput().value_from_datadict(
+                data, {}, f"{prefix}-{index}-DELETE"
+            )
+            if identity in removed or deleted:
+                continue
+            rows.append(
+                {
+                    key: data[f"{prefix}-{index}-{key}"]
+                    for key in keys
+                    if f"{prefix}-{index}-{key}" in data
+                }
+            )
+        for key in list(compacted):
+            if key.startswith(f"{prefix}-"):
+                del compacted[key]
+        compacted[f"{prefix}-TOTAL_FORMS"] = str(len(rows))
+        compacted[f"{prefix}-INITIAL_FORMS"] = "0"
+        compacted[f"{prefix}-MIN_NUM_FORMS"] = "0"
+        compacted[f"{prefix}-MAX_NUM_FORMS"] = str(maximum)
+        for index, row in enumerate(rows):
+            for key, value in row.items():
+                compacted[f"{prefix}-{index}-{key}"] = value
+    return compacted

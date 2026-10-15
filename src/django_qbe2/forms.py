@@ -9,6 +9,7 @@ from django.utils.translation import gettext_lazy as _
 from django_qbe2.catalog import ReportSpec
 from django_qbe2.choices import choice_value
 from django_qbe2.group_forms import (
+    GroupedFilterFormSet,
     build_where,
     default_group_data,
     display_groups,
@@ -173,6 +174,7 @@ class QueryBuilderForm(forms.Form):
         )
         self.filters = formset_factory(
             FilterForm,
+            formset=GroupedFilterFormSet,
             extra=1,
             can_delete=True,
             max_num=limits.max_filters,
@@ -198,11 +200,7 @@ class QueryBuilderForm(forms.Form):
         nodes, removed = {}, set()
         if groups_valid:
             nodes, removed = validate_structure(self.groups.cleaned_data, get_limits())
-            if removed:
-                for row in self.filters:
-                    if row["group"].value() in removed:
-                        row.data = row.data.copy()
-                        row.data[row.add_prefix("DELETE")] = "on"
+            self.filters.removed_groups = removed
         filters_valid = self.filters.is_valid()
         ordering_valid = self.ordering.is_valid()
         if self.errors or not filters_valid or not ordering_valid or not groups_valid:
@@ -215,7 +213,7 @@ class QueryBuilderForm(forms.Form):
         fields = self.catalog[cleaned["report"]].fields
         filters = []
         for row in self.filters.cleaned_data:
-            if not row or row.get("DELETE"):
+            if not row or row.get("DELETE") or (row.get("group") or "root") in removed:
                 continue
             if not row.get("field"):
                 if row.get("operator") or row.get("value"):

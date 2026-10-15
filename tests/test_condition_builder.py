@@ -104,3 +104,83 @@ class ConditionBuilderTests(TestCase):
         form = QueryBuilderForm(data, catalog=self.catalog)
         self.assertTrue(form.is_valid(), form.errors)
         self.assertEqual(form.payload["filters"], [leaf()])
+
+    def test_failed_preview_keeps_implicit_deletion_out_of_rendered_controls(self):
+        data = self.data(group(leaf(), group(leaf(value="A200"))))
+        data["groups-1-DELETE"] = "on"
+        data["page_size"] = "0"
+        form = QueryBuilderForm(data, catalog=self.catalog)
+        self.assertFalse(form.is_valid())
+        self.assertFalse(form.filters.forms[1]["DELETE"].value())
+        retry = form.data.copy()
+        retry["groups-1-DELETE"] = ""
+        retry["page_size"] = "50"
+        restored = QueryBuilderForm(retry, catalog=self.catalog)
+        self.assertTrue(restored.is_valid(), restored.errors)
+        self.assertEqual(len(restored.definition.filters), 2)
+
+    def test_explicit_filter_deletion_is_preserved_when_group_removal_is_canceled(self):
+        data = self.data(group(leaf(), group(leaf(value="A200"), leaf(value="A100"))))
+        data["groups-1-DELETE"] = "on"
+        data["filters-1-DELETE"] = "on"
+        data["page_size"] = "0"
+        form = QueryBuilderForm(data, catalog=self.catalog)
+        self.assertFalse(form.is_valid())
+        self.assertTrue(form.filters.forms[1]["DELETE"].value())
+        self.assertFalse(form.filters.forms[2]["DELETE"].value())
+        retry = form.data.copy()
+        retry["groups-1-DELETE"] = ""
+        retry["page_size"] = "50"
+        restored = QueryBuilderForm(retry, catalog=self.catalog)
+        self.assertTrue(restored.is_valid(), restored.errors)
+        self.assertEqual(len(restored.definition.filters), 2)
+
+    def test_add_reclaims_deleted_filter_capacity_without_validating_unfinished_values(
+        self,
+    ):
+        from django.test import override_settings
+
+        self.client.force_login(self.alice)
+        data = self.data(group(leaf(), leaf(value="unfinished")))
+        data["filters-0-DELETE"] = "on"
+        data["filters-1-operator"] = ""
+        with (
+            override_settings(QBE2_MAX_FILTERS=2),
+            patch(
+                "django_qbe2.views.build_queryset",
+                side_effect=AssertionError("must not execute"),
+            ),
+        ):
+            response = self.client.post(
+                "/qbe/results/", {**dict(data.items()), "action": "add_condition:root"}
+            )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context["form"].filters.total_form_count(), 2)
+        self.assertEqual(
+            response.context["form"].filters.forms[0]["value"].value(), "unfinished"
+        )
+        self.assertFalse(response.context["form"].filters.forms[0]["DELETE"].value())
+
+    def test_add_reclaims_deleted_subtree_capacity_without_report_execution(self):
+        from django.test import override_settings
+
+        self.client.force_login(self.alice)
+        data = self.data(group(leaf(value="unfinished"), group(leaf(value="A200"))))
+        data["groups-1-DELETE"] = "on"
+        data["filters-0-operator"] = ""
+        with (
+            override_settings(QBE2_MAX_GROUPS=2),
+            patch(
+                "django_qbe2.views.build_queryset",
+                side_effect=AssertionError("must not execute"),
+            ),
+        ):
+            response = self.client.post(
+                "/qbe/results/", {**dict(data.items()), "action": "add_group:root"}
+            )
+        self.assertEqual(response.status_code, 200)
+        form = response.context["form"]
+        self.assertEqual(form.groups.total_form_count(), 2)
+        self.assertEqual(form.filters.total_form_count(), 1)
+        self.assertEqual(form.filters.forms[0]["value"].value(), "unfinished")
+        self.assertNotEqual(form.groups.forms[1]["id"].value(), "g1")
