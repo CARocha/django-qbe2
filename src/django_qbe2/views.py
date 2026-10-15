@@ -28,6 +28,7 @@ from django_qbe2.group_forms import (
 from django_qbe2.limits import get_limits
 from django_qbe2.saved import get_saved_query
 from django_qbe2.saved_forms import SavedQueryNameForm
+from django_qbe2.summary_forms import compact_metrics
 from django_qbe2.validation import validate_definition
 
 logger = logging.getLogger(__name__)
@@ -112,14 +113,6 @@ def query_form(request, catalog, data=None):
             original,
             page_size=source.get("page_size", str(get_limits().page_size)),
         )
-        if isinstance(original, dict) and original.get("version") == 3:
-            report_id = original.get("report")
-            fallback = (
-                next(iter(catalog.get(report_id).fields), "")
-                if report_id in catalog
-                else ""
-            )
-            data.setlist("columns", [fallback] if fallback else [])
     report_id = data.get("report")
     if report_id and report_id not in catalog:
         raise Http404("Report not available.")
@@ -209,6 +202,93 @@ def builder_action(request, catalog, saved_query):
     )
 
 
+def _replace_formset(data, prefix, rows, maximum):
+    for key in list(data):
+        if key.startswith(f"{prefix}-"):
+            del data[key]
+    data.update(
+        {
+            f"{prefix}-TOTAL_FORMS": str(len(rows)),
+            f"{prefix}-INITIAL_FORMS": "0",
+            f"{prefix}-MIN_NUM_FORMS": "0",
+            f"{prefix}-MAX_NUM_FORMS": str(maximum),
+        }
+    )
+    for index, row in enumerate(rows):
+        for key, value in row.items():
+            data[f"{prefix}-{index}-{key}"] = value
+
+
+def summary_builder_action(request, catalog, saved_query):
+    limits = get_limits()
+    data = default_group_data(request.POST, limits).copy()
+    action = request.POST.get("action")
+    status = 200
+    try:
+        if action == "apply_mode":
+            mode = data.get("mode")
+            if mode not in ("rows", "summary"):
+                raise ValidationError(_("Choose Rows or Summary."))
+            report_id = data.get("report")
+            fields = catalog[report_id].fields if report_id in catalog else {}
+            data.setlist("group_by", [])
+            _replace_formset(data, "ordering", [], limits.max_ordering)
+            _replace_formset(data, "summary_ordering", [], limits.max_ordering)
+            _replace_formset(
+                data,
+                "metrics",
+                [{"id": "m1", "function": "count", "field": ""}],
+                limits.max_metrics,
+            )
+            data.setlist("columns", list(fields)[:2] if mode == "rows" else [])
+        elif action == "add_metric":
+            form = QueryBuilderForm(data, catalog=catalog, structure_only=True)
+            if not form.groups.is_valid():
+                raise ValidationError(_("Correct the condition groups below."))
+            validate_structure(form.groups.cleaned_data, limits)
+            data = compact_metrics(data, form.metrics, limits.max_metrics)
+            count = int(data["metrics-TOTAL_FORMS"])
+            if count >= limits.max_metrics:
+                raise ValidationError(_("The calculation limit was reached."))
+            used = {data.get(f"metrics-{index}-id") for index in range(count)}
+            identity = next(
+                f"m{number}"
+                for number in range(1, limits.max_metrics + 2)
+                if f"m{number}" not in used
+            )
+            data.update(
+                {
+                    f"metrics-{count}-id": identity,
+                    f"metrics-{count}-function": "",
+                    f"metrics-{count}-field": "",
+                    "metrics-TOTAL_FORMS": str(count + 1),
+                    "mode": "summary",
+                }
+            )
+        else:
+            raise ValidationError(_("Choose an available builder action."))
+        form = QueryBuilderForm(data, catalog=catalog, structure_only=True)
+        form.is_valid()
+        if action == "add_metric" and form.metrics.forms:
+            form.metrics.forms[-1].fields["function"].widget.attrs["autofocus"] = True
+    except (ValidationError, ValueError) as error:
+        form = QueryBuilderForm(data, catalog=catalog, structure_only=True)
+        form.is_valid()
+        form.add_error(
+            None,
+            error.messages
+            if isinstance(error, ValidationError)
+            else _("Invalid calculation controls."),
+        )
+        status = 400
+    return render(
+        request,
+        "django_qbe2/builder.html",
+        {**builder_context(request, catalog, form), "saved_query": saved_query},
+        status=status,
+    )
+
+
 @require_qbe_access
 @require_POST
 @report_errors
@@ -227,6 +307,8 @@ def results_view(request: HttpRequest):
         "add_group",
     ):
         return builder_action(request, catalog, saved_query)
+    if request.POST.get("action") in ("apply_mode", "add_metric"):
+        return summary_builder_action(request, catalog, saved_query)
     form = query_form(request, catalog)
     if not form.is_valid() or request.POST.get("action") == "edit":
         status = 200 if form.is_valid() else 400

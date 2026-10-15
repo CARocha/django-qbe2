@@ -19,11 +19,30 @@
     <input type="hidden" name="report" value="{{ form.report.value }}">
     {% if saved_query %}<input type="hidden" name="saved_query" value="{{ saved_query.pk }}">{% endif %}
     {% if form.errors %}<div role="alert" id="query-errors">{{ form.non_field_errors }}{{ form.report.errors }}</div>{% endif %}
+    <section class="module qbe-section qbe-mode-picker">
+      <h2>{% translate "Report type" %}</h2>
+      {{ form.mode.errors }}{{ form.mode.as_field_group }}
+      <button type="submit" name="action" value="apply_mode" class="button" formnovalidate>{% translate "Apply report type" %}</button>
+      <p class="help">{% translate "Changing report type preserves the report and conditions, but resets columns, calculations and ordering. Saved queries change only when you explicitly update them." %}</p>
+    </section>
+    {% if form.mode.value == "summary" %}
+    <section class="module qbe-section">
+      <h2>{% translate "1. Grouping and calculations" %}</h2>
+      <p>{% translate "Optionally group by fields, then choose the calculations to display." %}</p>
+      {{ form.group_by.errors }}{{ form.group_by }}
+      {{ form.metrics.management_form }}{{ form.metrics.non_form_errors }}
+      <div id="metric-rows">{% for row in form.metrics %}<div class="qbe-row">{{ row.as_div }}</div>{% endfor %}</div>
+      <button type="button" class="button qbe-add-row" data-prefix="metrics" data-added-message="{% translate 'Calculation added' %}" hidden>{% translate "Add calculation" %}</button>
+      <button type="submit" name="action" value="add_metric" class="button qbe-server-add" formnovalidate>{% translate "Add calculation" %}</button>
+      <template id="metrics-empty-form"><div class="qbe-row">{{ form.metrics.empty_form.as_div }}</div></template>
+    </section>
+    {% else %}
     <section class="module qbe-section">
       <h2>{% translate "1. Columns" %}</h2>
       <p>{% translate "Select the fields to include in your report." %}</p>
       {{ form.columns.errors }}{{ form.columns }}
     </section>
+    {% endif %}
     <section class="module qbe-section">
       <h2>{% translate "2. Conditions" %}</h2>
       <p>{% translate "Choose AND to match all conditions, OR to match any, and NOT to exclude a group. Choose a listed value when options are available. For boolean values, use true or false." %}</p>
@@ -33,10 +52,17 @@
     </section>
     <section class="module qbe-section">
       <h2>{% translate "3. Ordering" %}</h2>
+      {% if form.mode.value == "summary" %}
+      {{ form.summary_ordering.management_form }}{{ form.summary_ordering.non_form_errors }}
+      <div id="summary-ordering-rows">{% for row in form.summary_ordering %}<div class="qbe-row">{{ row.as_div }}</div>{% endfor %}</div>
+      <button type="button" class="button qbe-add-row" data-prefix="summary_ordering" data-added-message="{% translate 'Ordering added' %}" hidden>{% translate "Add ordering" %}</button>
+      <template id="summary_ordering-empty-form"><div class="qbe-row">{{ form.summary_ordering.empty_form.as_div }}</div></template>
+      {% else %}
       {{ form.ordering.management_form }}{{ form.ordering.non_form_errors }}
       <div id="ordering-rows">{% for row in form.ordering %}<div class="qbe-row">{{ row.as_div }}</div>{% endfor %}</div>
       <button type="button" class="button qbe-add-row" data-prefix="ordering" data-added-message="{% translate 'Ordering added' %}" hidden>{% translate "Add ordering" %}</button>
       <template id="ordering-empty-form"><div class="qbe-row">{{ form.ordering.empty_form.as_div }}</div></template>
+      {% endif %}
       {{ form.page_size.as_field_group }}
     </section>
     <div class="submit-row"><input type="submit" class="default" value="{% translate 'Preview report' %}"></div>

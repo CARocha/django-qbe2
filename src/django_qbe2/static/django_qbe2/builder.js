@@ -56,7 +56,7 @@
     remove.addEventListener("change", () => row.classList.toggle("qbe-row-deleted", remove.checked));
   }
 
-  document.querySelectorAll("#filter-rows .qbe-row, #ordering-rows .qbe-row").forEach(wireRow);
+  document.querySelectorAll("#filter-rows .qbe-row, #ordering-rows .qbe-row, #metric-rows .qbe-row, #summary-ordering-rows .qbe-row").forEach(wireRow);
   const groupElements = [...document.querySelectorAll(".qbe-condition-group")];
   const groupMap = new Map(groupElements.map(element => [element.dataset.group, element]));
   groupElements.forEach(element => {
@@ -84,9 +84,11 @@
   });
   document.querySelectorAll(".qbe-add-row").forEach(button => {
     const prefix = button.dataset.prefix;
+    if (prefix === "metrics") return;
     const total = document.getElementById(`id_${prefix}-TOTAL_FORMS`);
     const maximum = Number(document.getElementById(`id_${prefix}-MAX_NUM_FORMS`).value);
-    const container = document.getElementById(prefix === "filters" ? "filter-rows" : "ordering-rows");
+    const containers = {filters: "filter-rows", ordering: "ordering-rows", metrics: "metric-rows", summary_ordering: "summary-ordering-rows"};
+    const container = document.getElementById(containers[prefix]);
     button.hidden = false;
     button.disabled = Number(total.value) >= maximum;
     button.addEventListener("click", () => {

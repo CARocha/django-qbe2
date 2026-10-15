@@ -53,9 +53,7 @@ class SummaryValidationTests(TestCase):
             where={
                 "connector": "and",
                 "negated": False,
-                "children": [
-                    {"field": "total", "operator": "gte", "value": "10.25"}
-                ],
+                "children": [{"field": "total", "operator": "gte", "value": "10.25"}],
             },
             group_by=["active", "customer__name"],
             metrics=[

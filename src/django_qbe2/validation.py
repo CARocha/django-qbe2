@@ -194,11 +194,7 @@ def validate_summary_definition(
         validate_leaf=lambda row: validate_filter(row, fields),
     )
     rows = payload["metrics"]
-    if (
-        not isinstance(rows, list)
-        or not rows
-        or len(rows) > limits.max_metrics
-    ):
+    if not isinstance(rows, list) or not rows or len(rows) > limits.max_metrics:
         invalid("metrics", f"Choose 1–{limits.max_metrics} calculations.")
     metrics = []
     metric_ids = set()
