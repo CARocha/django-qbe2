@@ -126,7 +126,7 @@ storage, sharing and current-user authorization rules.
 Database-native aggregates, arbitrary joins, multi-database selection, Excel and
 the visual diagram are later work.
 CSV uses a synchronous streaming iterator intended for WSGI deployment.
-See the [public documentation](https://github.com/CARocha/django-qbe2/blob/main/docs/README.md) for installation, row policies,
+See the [public documentation](https://carocha.github.io/django-qbe2/) for installation, row policies,
 settings, API reference and troubleshooting. Sources are plain English
 reStructuredText under [docs/source](https://github.com/CARocha/django-qbe2/blob/main/docs/source/index.rst), readable by developers
 and agents. Contributor instructions live in [AGENTS.md](https://github.com/CARocha/django-qbe2/blob/main/AGENTS.md).
