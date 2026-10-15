@@ -24,7 +24,13 @@ booleans are rejected. ``QBE2_PAGE_SIZE`` cannot exceed ``QBE2_MAX_PAGE_SIZE``.
      - Maximum selected columns
    * - ``QBE2_MAX_FILTERS``
      - 20
-     - Maximum AND conditions
+     - Maximum conditions across all groups
+   * - ``QBE2_MAX_GROUPS``
+     - 10
+     - Maximum condition groups including the root
+   * - ``QBE2_MAX_GROUP_DEPTH``
+     - 3
+     - Maximum nested group levels including the root
    * - ``QBE2_MAX_ORDERING``
      - 3
      - Maximum explicit sort keys
@@ -56,7 +62,7 @@ Mount ``django_qbe2.urls`` under a prefix of your choice. The route names remain
      - Select a report and construct a query
    * - ``django_qbe2:results``
      - POST
-     - Validate, execute, paginate or edit a query
+     - Validate, execute, paginate, edit or add builder controls
    * - ``django_qbe2:export``
      - POST
      - Validate and download bounded CSV

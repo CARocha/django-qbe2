@@ -182,6 +182,26 @@ rows = list(csv.reader(io.StringIO(b''.join(export.streaming_content).decode()))
 assert rows[1:] == [['A100', 'Alice customer', '100.01', 'open']], rows
 export.close()
 print('Documented consumer report policies, HTML and CSV passed.')
+grouped = {key: value for key, value in definition.items() if key != 'filters'}
+grouped.update(version=2, where={
+    'connector': 'and', 'negated': False, 'children': [
+        {'connector': 'or', 'negated': False, 'children': [
+            {'field': 'total', 'operator': 'gte', 'value': '0.00'},
+            {'field': 'number', 'operator': 'exact', 'value': 'Hidden'},
+        ]},
+        {'connector': 'and', 'negated': True, 'children': [
+            {'field': 'number', 'operator': 'exact', 'value': 'B200'},
+        ]},
+    ],
+})
+grouped_data = {'definition': json.dumps(grouped)}
+grouped_result = client.post('/qbe/results/', grouped_data)
+assert grouped_result.status_code == 200, grouped_result.content
+assert b'>A100</td>' in grouped_result.content
+assert b'>Hidden</td>' not in grouped_result.content
+assert b'>B200</td>' not in grouped_result.content
+print('Installed wheel condition groups retain root and related scopes.')
+
 from django_qbe2.models import SavedQuery
 saved = client.post('/qbe/saved/create/', {
     **data, 'name': 'Shared order definition', 'shared_with': 'bob', 'page_size': '25'})

@@ -88,7 +88,7 @@ monitoring for the underlying failure without exposing sensitive query input.
 Use a new scoped feature request for unsupported behavior
 ---------------------------------------------------------
 
-Aggregates, OR/NOT, ManyToMany, inverse relations, multiple hops,
+Aggregates, ManyToMany, inverse relations, multiple hops,
 multi-database selection, Excel and visual diagrams are outside this MVP. Describe
 the intended workflow and constraints in a GitHub issue instead of working around
 server-side restrictions with arbitrary SQL.

@@ -12,13 +12,15 @@ Completed increments
 - Python 3.13–3.14 and Django 6.0–6.1 compatibility, verified on SQLite/PostgreSQL.
 - Generic Django model-choice selectors and readable HTML labels.
 - Saved definitions with private defaults and explicit reader/copy sharing
-  (``0.1.0a4`` candidate; see :doc:`saved_queries`).
+  (``0.1.0a4``; see :doc:`saved_queries`).
+- Native Django Admin navigation to the authorized saved-query list (``0.1.0a5``).
+
+- Bounded AND/OR/NOT groups with versioned definitions and unchanged row policies
+  (``0.1.0a6`` candidate; see :doc:`querying`).
 
 Next scoped increments
 ----------------------
 
-#. **OR/NOT condition groups:** a bounded, versioned query definition and a builder
-   that makes grouping visible, preserving all row and related-object policies.
 #. **Aggregates and grouping:** authorized count/sum/average and grouped results,
    with deliberate handling of decimals, NULL and report budgets.
 #. **More relationships:** evaluate ManyToMany and reverse relations with explicit

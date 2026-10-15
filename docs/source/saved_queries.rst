@@ -22,7 +22,7 @@ Find your queries
 -----------------
 
 Use **Saved queries** at the top of the QBE builder/results, or open
-``<your-qbe-prefix>/saved/`` directly. From the ``0.1.0a5`` candidate, Django's
+``<your-qbe-prefix>/saved/`` directly. From the ``0.1.0a5`` release, Django's
 default Admin also shows **Django QBE 2 > Saved queries** in its app list and
 sidebar. That entry opens the same authorized QBE list; **Build a report** returns
 to the builder. It does not expose a separate model editor or grant data access.
@@ -39,7 +39,7 @@ Save and reuse a definition
    or **Save a copy** to create another query. Previewing and editing alone never
    change the stored definition.
 
-The definition contains JSON v1 columns, conditions and ordering, plus the saved
+The definition contains versioned JSON columns, conditions and ordering, plus the saved
 page size. It stores choice codes and exact decimal/date representations. It
 does not store result rows, SQL, querysets or snapshots. Two executions may produce
 different results as data or access policies change.
@@ -97,3 +97,14 @@ Bounds
 Group sharing, collaborative editing, scheduling and stored result snapshots are
 outside this feature. The storage and form helpers are internal APIs; the supported
 integration remains app installation, namespaced routes, settings and report registration.
+
+
+Grouped definitions
+-------------------
+
+Saved definitions accept both the original v1 AND filters and v2 AND/OR/NOT
+trees. No migration or bulk rewrite is needed for condition groups. Opening an
+existing v1 definition does not modify it. Saving edits with groups uses v2;
+opening, copying, pagination and CSV preserve the expression. All branches are
+revalidated against the executing user's current catalog and row policies.
+See :doc:`querying` for the format, group limits and NULL semantics.

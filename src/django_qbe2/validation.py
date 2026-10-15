@@ -9,6 +9,7 @@ from django.core.validators import MaxLengthValidator
 from django.db import models
 
 from django_qbe2.catalog import FieldSpec, ReportSpec
+from django_qbe2.conditions import iter_filters, validate_group
 from django_qbe2.definitions import FilterSpec, OrderingSpec, QueryDefinition, Scalar
 from django_qbe2.limits import get_limits
 
@@ -70,14 +71,41 @@ def typed_value(spec: FieldSpec, operator: str, raw: object) -> Scalar:
     return value
 
 
+def validate_filter(row: object, fields: dict[str, FieldSpec]) -> FilterSpec:
+    if not isinstance(row, dict) or set(row) != {"field", "operator", "value"}:
+        invalid("filters", "Each filter needs a field, operator and value.")
+    path, operator = row["field"], row["operator"]
+    if not isinstance(path, str) or path not in fields:
+        invalid("filters", "Choose a permitted filter field.")
+    if not isinstance(operator, str) or operator not in fields[path].operators:
+        invalid("filters", "Choose a permitted operator for this field.")
+    try:
+        value = typed_value(fields[path], operator, row["value"])
+    except (ValidationError, ValueError, OverflowError) as error:
+        messages = (
+            error.messages if isinstance(error, ValidationError) else ["Invalid value."]
+        )
+        invalid("filters", f"{fields[path].label}: {' '.join(messages)}")
+    return FilterSpec(path, operator, value)
+
+
 def validate_definition(
     payload: object, catalog: dict[str, ReportSpec]
 ) -> QueryDefinition:
-    keys = {"version", "report", "columns", "filters", "ordering"}
-    if not isinstance(payload, dict) or set(payload) != keys:
+    if not isinstance(payload, dict):
         invalid("definition", "Use the complete versioned query definition.")
-    if type(payload["version"]) is not int or payload["version"] != 1:
+    version = payload.get("version")
+    if type(version) is not int or version not in (1, 2):
         invalid("definition", "Unsupported query version.")
+    keys = {
+        "version",
+        "report",
+        "columns",
+        "filters" if version == 1 else "where",
+        "ordering",
+    }
+    if set(payload) != keys:
+        invalid("definition", "Use the complete versioned query definition.")
     report_id = payload["report"]
     if not isinstance(report_id, str) or report_id not in catalog:
         invalid("report", "Choose an available report.")
@@ -88,6 +116,8 @@ def validate_definition(
         ("filters", limits.max_filters),
         ("ordering", limits.max_ordering),
     ):
+        if key == "filters" and version == 2:
+            continue
         if not isinstance(payload[key], list) or len(payload[key]) > maximum:
             invalid(key, f"Use at most {maximum} {key}.")
     columns = payload["columns"]
@@ -97,25 +127,16 @@ def validate_definition(
         invalid("columns", "Choose at least one permitted column.")
     if len(set(columns)) != len(columns):
         invalid("columns", "Choose each column once.")
-    filters = []
-    for row in payload["filters"]:
-        if not isinstance(row, dict) or set(row) != {"field", "operator", "value"}:
-            invalid("filters", "Each filter needs a field, operator and value.")
-        path, operator = row["field"], row["operator"]
-        if not isinstance(path, str) or path not in fields:
-            invalid("filters", "Choose a permitted filter field.")
-        if not isinstance(operator, str) or operator not in fields[path].operators:
-            invalid("filters", "Choose a permitted operator for this field.")
-        try:
-            value = typed_value(fields[path], operator, row["value"])
-        except (ValidationError, ValueError, OverflowError) as error:
-            messages = (
-                error.messages
-                if isinstance(error, ValidationError)
-                else ["Invalid value."]
-            )
-            invalid("filters", f"{fields[path].label}: {' '.join(messages)}")
-        filters.append(FilterSpec(path, operator, value))
+    where = None
+    if version == 1:
+        filters = [validate_filter(row, fields) for row in payload["filters"]]
+    else:
+        where = validate_group(
+            payload["where"],
+            limits=limits,
+            validate_leaf=lambda row: validate_filter(row, fields),
+        )
+        filters = list(iter_filters(where))
     ordering = []
     ordered_fields = set()
     for row in payload["ordering"]:
@@ -129,5 +150,5 @@ def validate_definition(
         ordered_fields.add(path)
         ordering.append(OrderingSpec(path, direction))
     return QueryDefinition(
-        1, report_id, tuple(columns), tuple(filters), tuple(ordering)
+        version, report_id, tuple(columns), tuple(filters), tuple(ordering), where
     )
