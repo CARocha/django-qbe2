@@ -4,7 +4,7 @@ Release status and publication
 Current status
 --------------
 
-The current alpha candidate is ``0.1.0a8``. It is experimental: its configuration
+The current alpha candidate is ``0.1.0a9``. It is experimental: its configuration
 API may change before a stable release. A metadata version or Git tag does not
 prove publication; verify the corresponding PyPI/TestPyPI index entry and the
 successful Publish workflow. Version metadata has one source: ``pyproject.toml``.
@@ -62,7 +62,7 @@ Publish to TestPyPI first
 #. Run the app/demo tests across all four Python/Django combinations on both databases, strict documentation builds,
    lint/format and the native dependency audit. Locked build/publishing dependencies
    live in the ``release`` group, outside the runtime requirements.
-#. Create the annotated tag ``v0.1.0a8`` at the verified main commit and push only
+#. Create the annotated tag ``v0.1.0a9`` at the verified main commit and push only
    main and that tag. Personal/archived branches must remain local.
 #. In GitHub Actions, select **Publish** > Run workflow. Select the release tag,
    choose destination ``testpypi`` and leave source_run_id empty.
