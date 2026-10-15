@@ -144,6 +144,86 @@ class SummaryScopeTests(TestCase):
         finally:
             report.get_queryset = original
 
+
+class MultiValuedSummaryScopeTests(TestCase):
+    def test_multi_valued_filter_counts_each_root_once(self):
+        from django.test import RequestFactory
+
+        from django_qbe2.catalog import get_catalog
+        from django_qbe2.engine import build_summary_source
+        from django_qbe2.execution import execute_summary
+        from tests.fixtures import grant_view, make_orders, make_staff
+        from tests.models import Customer, Order, Pet, Tag
+        from tests.test_summary_validation import summary_payload
+
+        user = make_staff("multi-summary")
+        grant_view(user, Customer, Order, Pet, Tag)
+        orders = make_orders(user)
+        customer = Customer.objects.get(owner=user)
+        Pet.objects.create(customer=customer, name="Milo")
+        Pet.objects.create(customer=customer, name="Milo")
+        request = RequestFactory().get("/")
+        request.user = user
+        catalog = get_catalog(request)
+        payload = summary_payload(
+            where={
+                "connector": "and",
+                "negated": False,
+                "children": [
+                    {
+                        "field": "customer__pets__name",
+                        "operator": "exact",
+                        "value": "Milo",
+                    }
+                ],
+            }
+        )
+        definition = validate_definition(payload, catalog)
+
+        result = execute_summary(
+            build_summary_source(definition, catalog, request), definition, catalog
+        )
+
+        self.assertEqual(result.source_count, len(orders))
+        self.assertEqual(result.rows[0]["metric:m1"], len(orders))
+
+        pet_report = catalog["tests.pet"].report
+        original = pet_report.get_queryset
+        try:
+            pet_report.get_queryset = lambda request: Pet.objects.none()
+            restricted_source = build_summary_source(definition, catalog, request)
+            restricted_result = execute_summary(restricted_source, definition, catalog)
+        finally:
+            pet_report.get_queryset = original
+
+        self.assertEqual(restricted_result.source_count, 0)
+        self.assertEqual(restricted_result.rows[0]["metric:m1"], 0)
+
+    def test_multi_valued_paths_cannot_group_summary_rows(self):
+        from django.core.exceptions import ValidationError
+        from django.test import RequestFactory
+
+        from django_qbe2.catalog import get_catalog
+        from django_qbe2.engine import build_summary_source
+        from tests.fixtures import grant_view, make_orders, make_staff
+        from tests.models import Customer, Order, Pet, Tag
+        from tests.test_summary_validation import summary_payload
+
+        user = make_staff("multi-summary-group")
+        grant_view(user, Customer, Order, Pet, Tag)
+        make_orders(user)
+        customer = Customer.objects.get(owner=user)
+        Pet.objects.create(customer=customer, name="Milo")
+        request = RequestFactory().get("/")
+        request.user = user
+        catalog = get_catalog(request)
+        definition = validate_definition(
+            summary_payload(group_by=["customer__pets__name"]), catalog
+        )
+
+        with self.assertRaises(ValidationError):
+            build_summary_source(definition, catalog, request)
+
     @skipUnless(connection.vendor == "postgresql", "PostgreSQL DISTINCT ON contract")
     def test_canonical_source_preserves_distinct_on_policy(self):
         from django_qbe2.engine import build_summary_source
