@@ -35,6 +35,7 @@ Django model permissions and each report's row policy are both required.
    contributing
    releases
    roadmap
+   relationship-design
 
 Sources are plain reStructuredText under ``docs/source/``. Developers and agents
 can read them directly from the repository without running the demo. Sphinx also

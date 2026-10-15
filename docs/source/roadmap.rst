@@ -24,8 +24,9 @@ Completed increments
 Next scoped increments
 ----------------------
 
-#. **More relationships:** evaluate ManyToMany and reverse relations with explicit
-   related-row policies and tests for duplicate rows and aggregate semantics.
+#. **More relationships:** add reverse ForeignKey and ManyToMany paths with explicit
+   related-row policies and one-row-per-root results. The proposed contract is in
+   :doc:`relationship-design`; it is not implemented in the current package.
 #. **Visual exploration:** a diagram derived only from the authorized catalog,
    useful alongside the form rather than necessary to execute a report.
 
