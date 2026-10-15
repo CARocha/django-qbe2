@@ -4,6 +4,8 @@ A reusable Django app for building authorized reports without writing SQL.
 Choose columns, add typed conditions, follow model relationships, preview paginated
 results, build grouped summaries and export CSV. Supports **Python 3.13–3.14 and Django 6.0–6.1**.
 
+**Documentation:** [Installation, usage, report registration, relationships and more](https://carocha.github.io/django-qbe2/).
+
 **Experimental alpha:** this is the initial implementation, not a production
 release or a drop-in replacement for the original package. The current release
 candidate is `0.1.0a9`; check [PyPI](https://pypi.org/project/django-qbe2/) for its
@@ -126,8 +128,7 @@ storage, sharing and current-user authorization rules.
 Database-native aggregates, arbitrary joins, multi-database selection, Excel and
 the visual diagram are later work.
 CSV uses a synchronous streaming iterator intended for WSGI deployment.
-See the [public documentation](https://carocha.github.io/django-qbe2/) for installation, row policies,
-settings, API reference and troubleshooting. Sources are plain English
+Sources are plain English
 reStructuredText under [docs/source](https://github.com/CARocha/django-qbe2/blob/main/docs/source/index.rst), readable by developers
 and agents. Contributor instructions live in [AGENTS.md](https://github.com/CARocha/django-qbe2/blob/main/AGENTS.md).
 
