@@ -2,7 +2,7 @@
 
 A reusable Django app for building authorized reports without writing SQL.
 Choose columns, add typed conditions, follow model relationships, preview paginated
-results, build grouped summaries and export CSV. Supports **Python 3.13–3.14 and Django 6.0–6.1**.
+results, build grouped summaries and export CSV or Excel. Supports **Python 3.13–3.14 and Django 6.0–6.1**.
 
 **Documentation:** [Installation, usage, report registration, relationships and more](https://carocha.github.io/django-qbe2/).
 
@@ -37,6 +37,12 @@ checking its availability on PyPI:
 
 ```sh
 python -m pip install django-qbe2==0.1.0a9
+```
+
+For Excel workbooks as well as CSV, install the optional extra:
+
+```sh
+python -m pip install 'django-qbe2[excel]'
 ```
 
 To try the checkout before publication, build and install its wheel:
@@ -98,7 +104,7 @@ class OrderReport(Report):
 Users need active staff status and Django `view` permissions for the root and any
 related model used. Staff status alone does not grant report access. Every report
 must provide an explicit row policy; Django model permissions do not imply row
-authorization. The same policies apply to columns, filters, ordering, HTML and CSV.
+authorization. The same policies apply to columns, filters, ordering, HTML, CSV and Excel.
 
 Django model `choices` require no QBE-specific configuration. Register the field,
 and equality filters offer its options automatically. The complete documentation
@@ -116,17 +122,19 @@ storage, sharing and current-user authorization rules.
 ## What is included
 
 - Text, integer, decimal, boolean, date, datetime and UUID fields.
-- Generic model-choice selectors and readable HTML labels; CSV keeps stored codes.
+- Generic model-choice selectors and readable HTML labels; exports keep stored codes.
 - Saved definitions, private by default, with explicit reader/copy sharing.
 - Bounded nested AND/OR/NOT groups, ascending/descending order and stable pagination.
 - Grouped or ungrouped Count, Sum and Average reports over authorized source rows.
 - Up to two relationship hops, including reverse and ManyToMany relations, with
   explicit related-row authorization and bounded collection columns.
 - Bounded CSV streaming, exact decimals, Unicode and safe text formula handling.
+- Optional Excel workbooks for row and summary reports, with typed cells and safe text.
 - Django Admin styling, light/dark modes and responsive, keyboard-accessible controls.
 
-Database-native aggregates, arbitrary joins, multi-database selection, Excel and
-the visual diagram are later work.
+Database-native aggregates, arbitrary joins, multi-database selection and the visual
+diagram are later work. Excel export requires the optional ``excel`` dependency:
+``python -m pip install 'django-qbe2[excel]'``.
 CSV uses a synchronous streaming iterator intended for WSGI deployment.
 Sources are plain English
 reStructuredText under [docs/source](https://github.com/CARocha/django-qbe2/blob/main/docs/source/index.rst), readable by developers

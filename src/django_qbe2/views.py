@@ -18,7 +18,13 @@ from django_qbe2.choices import choice_value
 from django_qbe2.definitions import SummaryDefinition
 from django_qbe2.engine import build_queryset, build_summary_source
 from django_qbe2.execution import execute_summary, get_page
-from django_qbe2.exports import csv_response, summary_csv_response
+from django_qbe2.exports import (
+    csv_response,
+    excel_available,
+    summary_csv_response,
+    summary_xlsx_response,
+    xlsx_response,
+)
 from django_qbe2.forms import OPERATOR_LABELS, QueryBuilderForm, payload_form_data
 from django_qbe2.group_forms import (
     compact_controls,
@@ -443,6 +449,7 @@ def results_view(request: HttpRequest):
         "group_count": len(summary_result.rows) if is_summary else None,
         "definition_json": json.dumps(form.payload),
         "limit": get_limits().max_rows,
+        "excel_available": excel_available(),
         "table_rows": table_rows,
         "previous_page": page.page - 1,
         "next_page": page.page + 1,
@@ -455,6 +462,17 @@ def results_view(request: HttpRequest):
 @report_errors
 def export_view(request: HttpRequest):
     catalog = get_catalog(request)
+    export_format = request.POST.get("export_format", "csv")
+    if export_format not in ("csv", "xlsx"):
+        return HttpResponse(_("Choose a supported export format."), status=400)
+    if export_format == "xlsx" and not excel_available():
+        return HttpResponse(
+            _(
+                "Excel export requires the optional dependency. "
+                "Install django-qbe2[excel]."
+            ),
+            status=400,
+        )
     form = query_form(request, catalog)
     if not form.is_valid():
         return render(
@@ -475,9 +493,13 @@ def export_view(request: HttpRequest):
                 builder_context(request, catalog, form),
                 status=400,
             )
+        if export_format == "xlsx":
+            return summary_xlsx_response(result, form.definition)
         return summary_csv_response(result, form.definition)
     queryset = build_queryset(form.definition, catalog, request)
     try:
+        if export_format == "xlsx":
+            return xlsx_response(queryset, form.definition, catalog, request=request)
         return csv_response(queryset, form.definition, catalog, request=request)
     except ValidationError as error:
         form.add_error(None, error.messages)

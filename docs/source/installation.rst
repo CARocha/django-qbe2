@@ -40,6 +40,16 @@ The distribution name is ``django-qbe2``; the import and app name is
 ``django_qbe2``. The wheel contains namespaced templates and static assets. It
 contains neither the demo database nor the host project's settings.
 
+Excel export is optional. Install the extra in the host project's environment to
+show the **Export Excel** button alongside CSV:
+
+.. code-block:: console
+
+   python -m pip install 'django-qbe2[excel]'
+
+Without this extra, Django QBE 2 continues to provide CSV exports and does not
+import ``openpyxl`` at runtime.
+
 Configure Django
 ----------------
 

@@ -22,13 +22,16 @@ classifiers = [
   "Intended Audience :: Developers",
 ]
 
+[project.optional-dependencies]
+excel = ["openpyxl>=3.1,<4"]
+
 [project.urls]
 Documentation = "https://github.com/CARocha/django-qbe2/tree/main/docs"
 Repository = "https://github.com/CARocha/django-qbe2"
 Issues = "https://github.com/CARocha/django-qbe2/issues"
 
 [dependency-groups]
-dev = ["ruff>=0.11", "psycopg[binary]>=3.2.10"]
+dev = ["openpyxl>=3.1,<4", "ruff>=0.11", "psycopg[binary]>=3.2.10"]
 docs = [
     "sphinx>=8.2,<10",
 ]

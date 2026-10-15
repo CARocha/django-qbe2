@@ -48,7 +48,7 @@ booleans are rejected. ``QBE2_PAGE_SIZE`` cannot exceed ``QBE2_MAX_PAGE_SIZE``.
      - Maximum row results or completed summary groups returned/exported
    * - ``QBE2_MAX_RELATED_VALUES``
      - 10,000
-     - Maximum related scalar values materialized per result page or complete CSV
+     - Maximum related scalar values materialized per result page or complete export
    * - ``QBE2_MAX_SAVED_QUERIES``
      - 100
      - Maximum stored definitions per owner, including copies
@@ -79,7 +79,7 @@ Mount ``django_qbe2.urls`` under a prefix of your choice. The route names remain
      - Validate, execute, paginate, edit or add builder controls
    * - ``django_qbe2:export``
      - POST
-     - Validate and download bounded CSV
+     - Validate and download bounded CSV or optional Excel
    * - ``django_qbe2:saved_list``
      - GET
      - Paginated owned/accessible shared definitions
@@ -114,7 +114,7 @@ Anonymous users are redirected to the default admin login. Inactive/nonstaff use
 are denied. Unavailable reports return 404; invalid input generally returns 400
 with form errors; unsupported methods return 405. Unexpected execution failures
 return a generic 500 without exposing SQL or payload details. CSV failures after
-streaming begins abort the download; see :doc:`querying`.
+streaming begins abort the download; see :doc:`querying` for export behavior.
 
 Retain your application's authentication, session, CSRF, static serving and
 production deployment configuration. The package provides reporting controls,

@@ -2,7 +2,7 @@ Django QBE 2
 ============
 
 Build reports without writing SQL: choose columns, add typed conditions or summary
-calculations, preview pages and download CSV. Django QBE 2 is a reusable app for **Python 3.13–3.14 and
+calculations, preview pages and download CSV or optional Excel workbooks. Django QBE 2 is a reusable app for **Python 3.13–3.14 and
 Django 6.0–6.1**, inspired by `versae/qbe <https://github.com/versae/qbe>`_.
 
 .. warning::

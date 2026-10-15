@@ -42,9 +42,10 @@ Build a report
 #. Optionally add Delivered equals No (false). Conditions are combined with AND.
 #. Choose Total amount descending and a page size, then run the report.
 #. Navigate between pages or use Edit query to change conditions.
-#. Download CSV to export all matching rows up to the configured report limit.
+#. Download CSV, or install ``django-qbe2[excel]`` to also export an Excel workbook.
+   Both formats include all matching rows up to the configured report limit.
 
-The CSV includes the complete bounded report, even when you are viewing page two.
+Exports include the complete bounded report, even when you are viewing page two.
 Log in as Bob to check isolation: Alice's rows and customer data must not appear.
 An optional superuser created with ``demo/manage.py createsuperuser`` can view all
 synthetic rows because the demo explicitly implements that policy.
@@ -56,4 +57,4 @@ Next steps
 ----------
 
 Use :doc:`installation` for your own project and :doc:`reports` to implement row
-policies. :doc:`querying` explains supported values, relationships and CSV behavior.
+policies. :doc:`querying` explains supported values, relationships and export behavior.

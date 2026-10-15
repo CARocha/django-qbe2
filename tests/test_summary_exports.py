@@ -1,6 +1,7 @@
 import csv
 import io
 import json
+from io import BytesIO
 from unittest.mock import patch
 
 from django.core.exceptions import ValidationError
@@ -8,6 +9,7 @@ from django.db import connection
 from django.test import TransactionTestCase, override_settings
 from django.test.utils import CaptureQueriesContext
 from django.urls import reverse
+from openpyxl import load_workbook
 
 from tests.fixtures import grant_view, make_orders, make_staff
 from tests.models import Customer, Order
@@ -21,10 +23,14 @@ class SummaryExportTests(TransactionTestCase):
         self.orders = make_orders(self.user)
         self.client.force_login(self.user)
 
-    def export(self, payload):
+    def export(self, payload, export_format="csv"):
         return self.client.post(
             reverse("django_qbe2:export"),
-            {"definition": json.dumps(payload), "page_size": "1"},
+            {
+                "definition": json.dumps(payload),
+                "page_size": "1",
+                "export_format": export_format,
+            },
         )
 
     def test_malformed_summary_ordering_returns_validation_response(self):
@@ -55,6 +61,41 @@ class SummaryExportTests(TransactionTestCase):
                 ["2", "300.01", "150.005000"],
             ],
         )
+
+    def test_summary_excel_preserves_boolean_and_decimal_values(self):
+        payload = summary_payload(
+            group_by=["active"],
+            metrics=[{"id": "m1", "function": "sum", "field": "total"}],
+        )
+        response = self.export(payload, export_format="xlsx")
+        self.assertEqual(response.status_code, 200)
+        workbook = load_workbook(BytesIO(b"".join(response.streaming_content)))
+        rows = list(workbook["Report"].values)
+        self.assertEqual(rows[0], ("active", "Sum of total"))
+        self.assertIn((True, 300.01), rows)
+        self.assertEqual(workbook["Report"]["B2"].data_type, "n")
+        workbook.close()
+        response.close()
+
+    @override_settings(QBE2_MAX_ROWS=1)
+    def test_summary_excel_is_bounded_and_reports_truncation(self):
+        Order.objects.filter(pk=self.orders[1].pk).update(active=False)
+        response = self.export(
+            summary_payload(
+                group_by=["active"],
+                metrics=[{"id": "m1", "function": "count", "field": None}],
+            ),
+            export_format="xlsx",
+        )
+        self.assertEqual(response["X-QBE-Truncated"], "true")
+        workbook = load_workbook(
+            BytesIO(b"".join(response.streaming_content)), read_only=True
+        )
+        rows = list(workbook["Report"].values)
+        self.assertEqual(rows[0], ("active", "Count records"))
+        self.assertEqual(len(rows), 2)
+        workbook.close()
+        response.close()
 
     @override_settings(QBE2_MAX_ROWS=1)
     def test_group_cap_sets_header_after_complete_summary(self):

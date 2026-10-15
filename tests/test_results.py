@@ -1,4 +1,5 @@
 import json
+from unittest.mock import patch
 
 from django.test import Client, TestCase, override_settings
 from django.urls import reverse
@@ -39,6 +40,18 @@ class ResultsTests(TestCase):
         self.assertNotContains(response, "B100")
         self.assertEqual(json.loads(response.context["definition_json"]), payload)
         self.assertContains(response, "csrfmiddlewaretoken")
+
+    def test_excel_export_button_is_shown_when_optional_dependency_is_available(self):
+        with patch("django_qbe2.views.excel_available", return_value=True):
+            response = self.post()
+        self.assertContains(response, 'value="xlsx"')
+        self.assertContains(response, "Export Excel")
+
+    def test_excel_export_button_is_hidden_without_optional_dependency(self):
+        with patch("django_qbe2.views.excel_available", return_value=False):
+            response = self.post()
+        self.assertNotContains(response, "Export Excel")
+        self.assertContains(response, "Export CSV")
 
     def test_invalid_definition_returns_builder_with_errors(self):
         response = self.post(order_payload(columns=["owner__password"]))

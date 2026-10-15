@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased
+
+### Added
+
+- Optional ``django-qbe2[excel]`` workbooks for authorized row and summary reports,
+  with bounded exports, typed cells, formula-safe text and joined relationship values.
+- Excel stays hidden and CSV remains available when the optional dependency is absent.
+
 ## 0.1.0a9 — release candidate
 
 ### Added

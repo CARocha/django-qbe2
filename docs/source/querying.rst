@@ -69,8 +69,8 @@ JavaScript, entering a stored code still works and the edit form renders a selec
 
 HTML results display declared labels. Unknown historical codes remain visible
 as their original values. Labels are plain text, including labels marked safe
-by host code. Filtering, ordering, pagination and CSV continue to use stored values.
-For example, HTML displays ``Open`` and CSV exports ``open``. Exported data does
+by host code. Filtering, ordering, pagination and exports continue to use stored values.
+For example, HTML displays ``Open`` while CSV and Excel export ``open``. Exported data does
 not depend on the language of a label or on later label changes.
 
 Choices are captured for authorized fields in each request's catalog. No option
@@ -113,8 +113,26 @@ ASGI; ASGI-native streaming is not advertised. A first-row preflight catches ear
 errors. Later errors abort the download and are logged by exception class without
 SQL or query payloads. Headers already sent cannot change to a new error status.
 Closing or failing the stream releases its cursor and timeout context.
-Summary execution finishes before CSV headers are returned, so a source-limit or
-calculation error produces an ordinary error response rather than a partial file.
+
+Excel export
+------------
+
+Install ``django-qbe2[excel]`` to enable the **Export Excel** button. The workbook
+contains one ``Report`` worksheet and exports the complete bounded report, including
+completed summary groups, in the same order as CSV. Multi-valued relationship values
+are joined into one text cell per root row. Text is stored as literal text, so values
+beginning with formula characters are not executed as spreadsheet formulas. Numeric,
+boolean, date and datetime values use Excel cell types; aware datetimes use Django's
+active timezone and are written without timezone metadata because Excel has no
+timezone-aware datetime cell type. ``Decimal`` values are numeric cells; Excel itself
+limits numeric precision to 15 significant digits, so use CSV when exact arbitrary
+decimal precision is required. The same row, summary and related-value limits apply.
+
+Excel is an optional dependency and is imported only when an XLSX export is requested.
+Without the extra the CSV export remains available and the Excel button is hidden.
+
+Summary execution finishes before CSV or Excel output is returned, so a source-limit
+or calculation error produces an ordinary error response rather than a partial file.
 
 Query definition v1
 -------------------

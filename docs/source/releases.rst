@@ -11,7 +11,8 @@ successful Publish workflow. Version metadata has one source: ``pyproject.toml``
 
 The MVP includes report registration, explicit row policies, related-row checks,
 typed AND/OR/NOT groups, bounded Count/Sum/Average summaries, stable pages, safe
-CSV and a synthetic demo. Saved definitions support explicit reader/copy sharing.
+CSV and optional Excel exports and a synthetic demo. Saved definitions support
+explicit reader/copy sharing.
 See :doc:`roadmap` for remaining priorities.
 See :download:`CHANGELOG.md <../../CHANGELOG.md>` for consumer-facing changes.
 

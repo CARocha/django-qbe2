@@ -67,7 +67,7 @@ referenced target key.
 
 Each report along the path must be visible to the user and its
 ``get_queryset(request)`` policy scopes the related objects. This applies to HTML,
-CSV, saved queries and shared queries. Multi-valued paths can be selected and
+CSV/Excel exports, saved queries and shared queries. Multi-valued paths can be selected and
 filtered, but cannot be used for row ordering, summary grouping or numeric summary
 metrics. See :doc:`relationship-design` for collection formatting, existential
 filter behavior and the related-value limit.

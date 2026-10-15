@@ -24,6 +24,8 @@ Completed increments
 - Reverse ForeignKey/OneToOne and ManyToMany paths up to two relationship hops,
   with scoped related-row policies, existential filters and bounded one-row-per-root
   output (see :doc:`relationship-design`).
+- Optional typed Excel exports for authorized row and summary reports; CSV remains
+  the default dependency-free format.
 
 Next scoped increments
 ----------------------
@@ -36,6 +38,6 @@ public documentation and a compatibility check before integration. This order
 sets priorities, not release dates or a promise of full SQL parity.
 
 Other ideas needing separate design include custom operators, multiple database
-aliases, database-native aggregate execution, Excel export, a public REST API,
-group sharing and scheduled reports.
+aliases, database-native aggregate execution, a public REST API, group sharing and
+scheduled reports.
 Arbitrary client SQL and Python evaluation remain outside the intended interface.

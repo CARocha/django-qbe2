@@ -135,6 +135,7 @@ base = {
 summary = client.post('/qbe/results/', {'definition': json.dumps(base)})
 assert summary.status_code == 200, summary.content
 assert b'2 source records' in summary.content and b'20.00' in summary.content
+assert b'Export CSV' in summary.content and b'Export Excel' not in summary.content
 grouped = {**base, 'group_by': ['status'], 'ordering': [
     {'type': 'group', 'field': 'status', 'direction': 'asc'}]}
 grouped_result = client.post('/qbe/results/', {'definition': json.dumps(grouped)})

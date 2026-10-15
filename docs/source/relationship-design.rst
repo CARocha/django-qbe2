@@ -49,8 +49,8 @@ when at least one related object on that path satisfies the leaf. Boolean AND, O
 and NOT groups combine those root-level truth values. Two leaves under AND may
 therefore match different related objects.
 
-For an empty collection, HTML uses the existing empty-value presentation and CSV
-uses an empty cell. HTML choice fields display their declared labels; CSV retains
+For an empty collection, HTML uses the existing empty-value presentation and CSV/Excel
+use an empty cell. HTML choice fields display their declared labels; exports retain
 stored values. Joined output is plain text and HTML-escaped.
 
 Bounds and failure behavior
@@ -60,13 +60,13 @@ Collection values are fetched in batches per selected multi-valued path, never w
 one query per root row. The root page is selected and paginated before collection
 values are fetched. Related values use a stable order. ``QBE2_MAX_RELATED_VALUES``
 defaults to 10,000 and limits values materialized for a result page or complete
-CSV. If the cap is exceeded, the request fails; it does not return a silently
-truncated cell or partial CSV.
+CSV or Excel export. If the cap is exceeded, the request fails; it does not return a
+silently truncated cell or partial export.
 
 The root queryset remains the source of row policy, conditions and root ordering.
 Related report policies constrain every traversed model, including intermediates.
-CSV uses the same path validation, policies, formatting and cap as HTML. Saved and
-shared reports are revalidated against the current catalog and executing user's
+CSV and Excel use the same path validation, policies, formatting and cap as HTML.
+Saved and shared reports are revalidated against the current catalog and executing user's
 policies on every request.
 
 Verification
@@ -75,5 +75,5 @@ Verification
 The test suite covers forward and reverse traversal, both ManyToMany directions,
 intermediate paths, duplicate through links, independent collection columns,
 existential filters, boolean groups, row-policy isolation, permissions, pagination,
-CSV and the related-value cap. SQLite and PostgreSQL are both supported by the
+CSV, Excel and the related-value cap. SQLite and PostgreSQL are both supported by the
 compatibility suite. Existing saved-definition formats remain unchanged.
