@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.1.0a8 — release candidate
+## 0.1.0a9 — release candidate
 
 ### Added
 

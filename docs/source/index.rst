@@ -7,7 +7,7 @@ Django 6.0–6.1**, inspired by `versae/qbe <https://github.com/versae/qbe>`_.
 
 .. warning::
 
-   This is an experimental alpha. Check PyPI for the ``0.1.0a8`` candidate's
+   This is an experimental alpha. Check PyPI for the ``0.1.0a9`` candidate's
    availability, or use the checkout/a locally built wheel. The public
    configuration API may change before a stable release.
 
