@@ -28,6 +28,7 @@ class OrderReport(Report):
         "customer__credit_limit",
         "customer_by_code__code",
         "customer__pets__name",
+        "customer__pets__id",
         "customer__profile__label",
     )
 
@@ -47,7 +48,7 @@ class ProfileReport(Report):
 @register
 class PetReport(Report):
     model = Pet
-    fields = ("name", "tags__label")
+    fields = ("id", "name", "tags__label")
 
     def get_queryset(self, request):
         return Pet.objects.filter(customer__owner=request.user)

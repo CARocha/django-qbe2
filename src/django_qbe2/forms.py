@@ -134,7 +134,9 @@ class OrderingForm(forms.Form):
     def __init__(self, *args, fields, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields["field"].choices = [("", _("Choose field"))] + [
-            (path, field.label) for path, field in fields.items()
+            (path, field.label)
+            for path, field in fields.items()
+            if not field.multi_valued
         ]
 
 
@@ -187,7 +189,9 @@ class QueryBuilderForm(forms.Form):
             (path, field.label) for path, field in fields.items()
         ]
         self.fields["group_by"].choices = [
-            (path, field.label) for path, field in fields.items()
+            (path, field.label)
+            for path, field in fields.items()
+            if not field.multi_valued
         ]
         self.fields["group_by"].widget.attrs["data-maximum"] = limits.max_group_by
         self.fields["page_size"] = forms.IntegerField(

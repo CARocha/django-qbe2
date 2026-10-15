@@ -11,6 +11,7 @@ def numeric_field_choices(fields):
         for path, spec in fields.items()
         if isinstance(spec.django_field, (models.IntegerField, models.DecimalField))
         and not isinstance(spec.django_field, models.BooleanField)
+        and not spec.multi_valued
     ]
 
 
