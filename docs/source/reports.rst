@@ -71,3 +71,76 @@ CSV, saved queries and shared queries. Multi-valued paths can be selected and
 filtered, but cannot be used for row ordering, summary grouping or numeric summary
 metrics. See :doc:`relationship-design` for collection formatting, existential
 filter behavior and the related-value limit.
+
+Example: subscriptions, users and pets
+--------------------------------------
+
+Keep ``Subscription`` as the root when you want one report row per subscription.
+Declare each related path in that root report's ``fields`` tuple. For example,
+``user__email`` follows a forward ``ForeignKey`` or ``OneToOneField`` from
+``Subscription`` to ``User``. If ``Pet.user`` declares ``related_name="pets"``,
+``user__pets__name`` follows the reverse relation and collects pet names into one
+cell per subscription. Use the relation's ``related_query_name`` in a report path.
+If neither ``related_name`` nor ``related_query_name`` is set, Django defaults to
+the related model name, commonly ``user__pet__name``; the Python instance
+accessor (commonly ``pet_set``) is not the ORM lookup name.
+
+Register the root and both related models. Every report's row policy must match
+the access your application intends to grant; the example gives superusers all
+rows and scopes other staff to their own data:
+
+.. code-block:: python
+
+   from django.contrib.auth import get_user_model
+   from django_qbe2.registry import Report, register
+
+   from .models import Pet, Subscription
+
+   User = get_user_model()
+
+
+   @register
+   class UserReport(Report):
+       model = User
+       fields = ("email",)
+
+       def get_queryset(self, request):
+           queryset = User.objects.all()
+           if request.user.is_superuser:
+               return queryset
+           return queryset.filter(pk=request.user.pk)
+
+
+   @register
+   class PetReport(Report):
+       model = Pet
+       fields = ("name",)
+
+       def get_queryset(self, request):
+           queryset = Pet.objects.all()
+           if request.user.is_superuser:
+               return queryset
+           return queryset.filter(user=request.user)
+
+
+   @register
+   class SubscriptionReport(Report):
+       model = Subscription
+       fields = ("plan", "status", "user__email", "user__pets__name")
+
+       def get_queryset(self, request):
+           queryset = Subscription.objects.all()
+           if request.user.is_superuser:
+               return queryset
+           return queryset.filter(user=request.user)
+
+Adapt model and relation names, such as ``Pet.user`` and the reverse query name
+``pets``, to your schema. The paths must be declared on ``SubscriptionReport``;
+registering ``UserReport`` and ``PetReport`` authorizes and scopes each related
+model, but does not automatically add its fields to the subscription report.
+Then select **Subscriptions** in the builder and choose the related columns.
+
+This example uses two relationship hops for ``user__pets__name`` and one
+multi-valued edge for the user's pets, within the supported limits. It does not
+change the root row policy: ``get_queryset()`` on ``SubscriptionReport`` still
+determines which subscriptions the user may report on.
