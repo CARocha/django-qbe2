@@ -7,8 +7,9 @@ from datetime import date
 from django.db.models import QuerySet
 from django.http import StreamingHttpResponse
 
+from django_qbe2.aggregation import SummaryResult, paginate_summary
 from django_qbe2.catalog import ReportSpec
-from django_qbe2.definitions import QueryDefinition, Scalar
+from django_qbe2.definitions import QueryDefinition, Scalar, SummaryDefinition
 from django_qbe2.execution import bounded_count, query_timeout
 from django_qbe2.limits import get_limits
 
@@ -71,5 +72,46 @@ def csv_response(
     filename = f"report-{definition.report.replace('.', '-')}.csv"
     response["Content-Disposition"] = f'attachment; filename="{filename}"'
     if truncated:
+        response["X-QBE-Truncated"] = "true"
+    return response
+
+
+def summary_csv_response(
+    result: SummaryResult,
+    definition: SummaryDefinition,
+) -> StreamingHttpResponse:
+    """Return a bounded CSV from an already materialized summary."""
+    limits = get_limits()
+    page_size = min(limits.max_page_size, limits.max_rows)
+    first_page = paginate_summary(
+        result,
+        definition,
+        page=1,
+        page_size=page_size,
+        max_rows=limits.max_rows,
+    )
+    rows = list(first_page.rows)
+    for page_number in range(2, first_page.num_pages + 1):
+        rows.extend(
+            paginate_summary(
+                result,
+                definition,
+                page=page_number,
+                page_size=page_size,
+                max_rows=limits.max_rows,
+            ).rows
+        )
+    columns = result.columns
+
+    def content():
+        writer = csv.writer(Echo())
+        yield writer.writerow([csv_cell(column.label) for column in columns])
+        for row in rows:
+            yield writer.writerow([csv_cell(row[column.key]) for column in columns])
+
+    response = StreamingHttpResponse(content(), content_type="text/csv; charset=utf-8")
+    filename = f"report-{definition.report.replace('.', '-')}.csv"
+    response["Content-Disposition"] = f'attachment; filename="{filename}"'
+    if first_page.truncated:
         response["X-QBE-Truncated"] = "true"
     return response

@@ -18,7 +18,7 @@ from django_qbe2.choices import choice_value
 from django_qbe2.definitions import SummaryDefinition
 from django_qbe2.engine import build_queryset, build_summary_source
 from django_qbe2.execution import execute_summary, get_page
-from django_qbe2.exports import csv_response
+from django_qbe2.exports import csv_response, summary_csv_response
 from django_qbe2.forms import OPERATOR_LABELS, QueryBuilderForm, payload_form_data
 from django_qbe2.group_forms import (
     compact_controls,
@@ -419,5 +419,18 @@ def export_view(request: HttpRequest):
             builder_context(request, catalog, form),
             status=400,
         )
+    if isinstance(form.definition, SummaryDefinition):
+        try:
+            queryset = build_summary_source(form.definition, catalog, request)
+            result = execute_summary(queryset, form.definition, catalog)
+        except ValidationError as error:
+            form.add_error(None, error.messages)
+            return render(
+                request,
+                "django_qbe2/builder.html",
+                builder_context(request, catalog, form),
+                status=400,
+            )
+        return summary_csv_response(result, form.definition)
     queryset = build_queryset(form.definition, catalog, request)
     return csv_response(queryset, form.definition, catalog)
