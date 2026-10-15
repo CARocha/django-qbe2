@@ -1,11 +1,17 @@
 """Compile validated definitions using the Django ORM and explicit row policies."""
 
 from django.core.exceptions import ImproperlyConfigured
-from django.db.models import Model, Q, QuerySet
+from django.db.models import Model, Q, QuerySet, Subquery
 from django.http import HttpRequest
 
 from django_qbe2.catalog import ReportSpec
-from django_qbe2.definitions import ConditionGroup, FilterSpec, QueryDefinition
+from django_qbe2.conditions import iter_filters
+from django_qbe2.definitions import (
+    ConditionGroup,
+    FilterSpec,
+    QueryDefinition,
+    SummaryDefinition,
+)
 
 
 def validate_scope(queryset: QuerySet, model: type[Model]) -> QuerySet:
@@ -38,16 +44,25 @@ def compile_condition(node: FilterSpec | ConditionGroup) -> Q:
     return ~predicate if node.negated else predicate
 
 
-def build_queryset(
-    definition: QueryDefinition,
+def build_scoped_queryset(
+    definition: QueryDefinition | SummaryDefinition,
     catalog: dict[str, ReportSpec],
     request: HttpRequest,
 ) -> QuerySet:
     report = catalog[definition.report].report
     queryset = validate_scope(report.get_queryset(request), report.model)
-    used_fields = set(definition.columns)
-    used_fields.update(item.field for item in definition.filters)
-    used_fields.update(item.field for item in definition.ordering)
+    if isinstance(definition, SummaryDefinition):
+        filters = tuple(iter_filters(definition.where))
+        used_fields = set(definition.group_by)
+        used_fields.update(item.field for item in filters)
+        used_fields.update(
+            item.field for item in definition.metrics if item.field is not None
+        )
+    else:
+        filters = definition.filters
+        used_fields = set(definition.columns)
+        used_fields.update(item.field for item in filters)
+        used_fields.update(item.field for item in definition.ordering)
     scoped_relations = set()
     for path in used_fields:
         field = catalog[definition.report].fields[path]
@@ -68,12 +83,33 @@ def build_queryset(
     if definition.where is not None:
         predicates = compile_condition(definition.where)
     else:
-        for condition in definition.filters:
+        for condition in filters:
             predicates &= compile_condition(condition)
+    return queryset.filter(predicates)
+
+
+def build_queryset(
+    definition: QueryDefinition,
+    catalog: dict[str, ReportSpec],
+    request: HttpRequest,
+) -> QuerySet:
+    report = catalog[definition.report].report
+    queryset = build_scoped_queryset(definition, catalog, request)
     ordering = [
         f"{'-' if item.direction == 'desc' else ''}{item.field}"
         for item in definition.ordering
     ]
     if report.model._meta.pk.name not in {item.field for item in definition.ordering}:
         ordering.append("pk")
-    return queryset.filter(predicates).order_by(*ordering)
+    return queryset.order_by(*ordering)
+
+
+def build_summary_source(
+    definition: SummaryDefinition,
+    catalog: dict[str, ReportSpec],
+    request: HttpRequest,
+) -> QuerySet:
+    report = catalog[definition.report].report
+    scoped = build_scoped_queryset(definition, catalog, request)
+    base = validate_scope(report.model._base_manager.all(), report.model)
+    return base.filter(pk__in=Subquery(scoped.values("pk"))).order_by("pk")
