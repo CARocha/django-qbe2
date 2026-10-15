@@ -33,8 +33,10 @@ class ExcelExportTests(TestCase):
             response["Content-Type"],
             "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         )
+        export_file = response.file_to_stream
         content = b"".join(response.streaming_content)
-        response.close()
+        if export_file and not export_file.closed:
+            export_file.close()
         return load_workbook(BytesIO(content), data_only=False)
 
     def test_row_export_preserves_types_and_keeps_text_as_text(self):
