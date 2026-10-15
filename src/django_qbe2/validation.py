@@ -157,6 +157,8 @@ def validate_definition(
             invalid("ordering", "Choose distinct permitted ordering fields.")
         if direction not in ("asc", "desc"):
             invalid("ordering", "Choose ascending or descending order.")
+        if fields[path].multi_valued:
+            invalid("ordering", "Choose a single-valued ordering field.")
         ordered_fields.add(path)
         ordering.append(OrderingSpec(path, direction))
     return QueryDefinition(
@@ -186,6 +188,8 @@ def validate_summary_definition(
         invalid("group_by", f"Use at most {limits.max_group_by} grouping fields.")
     if any(not isinstance(path, str) or path not in fields for path in group_by):
         invalid("group_by", "Choose permitted grouping fields.")
+    if any(fields[path].multi_valued for path in group_by):
+        invalid("group_by", "Choose single-valued grouping fields.")
     if len(set(group_by)) != len(group_by):
         invalid("group_by", "Choose each grouping field once.")
     where = validate_group(
@@ -218,6 +222,8 @@ def validate_summary_definition(
             if not isinstance(path, str) or path not in fields:
                 invalid("metrics", "Choose a permitted numeric field.")
             field = fields[path].django_field
+            if fields[path].multi_valued:
+                invalid("metrics", "Choose a single-valued numeric field.")
             if isinstance(field, models.BooleanField) or not isinstance(
                 field, (models.IntegerField, models.DecimalField)
             ):

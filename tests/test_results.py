@@ -83,3 +83,28 @@ class ResultsTests(TestCase):
     def test_edit_keeps_an_empty_condition_without_javascript(self):
         response = self.post(action="edit")
         self.assertEqual(len(response.context["form"].filters.forms), 1)
+
+
+class MultiValuedResultsTests(TestCase):
+    setUp = test_engine.EngineTests.setUp
+
+    def test_related_values_render_as_joined_escaped_html(self):
+        from tests.fixtures import grant_view
+        from tests.models import Pet
+
+        grant_view(self.alice, Pet)
+        for cache in ("_perm_cache", "_user_perm_cache", "_group_perm_cache"):
+            if hasattr(self.alice, cache):
+                delattr(self.alice, cache)
+        customer = self.orders[0].customer
+        Pet.objects.create(customer=customer, name="<Milo>")
+        Pet.objects.create(customer=customer, name="Luna")
+        self.client.force_login(self.alice)
+        payload = order_payload(columns=["number", "customer__pets__name"])
+        response = self.client.post(
+            reverse("django_qbe2:results"),
+            {"definition": json.dumps(payload), "page_size": "50"},
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "&lt;Milo&gt;, Luna")
+        self.assertNotContains(response, "<Milo>")

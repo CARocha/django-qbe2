@@ -46,6 +46,9 @@ booleans are rejected. ``QBE2_PAGE_SIZE`` cannot exceed ``QBE2_MAX_PAGE_SIZE``.
    * - ``QBE2_MAX_ROWS``
      - 10,000
      - Maximum row results or completed summary groups returned/exported
+   * - ``QBE2_MAX_RELATED_VALUES``
+     - 10,000
+     - Maximum related scalar values materialized per result page or complete CSV
    * - ``QBE2_MAX_SAVED_QUERIES``
      - 100
      - Maximum stored definitions per owner, including copies

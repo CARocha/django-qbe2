@@ -98,10 +98,10 @@ Django documents SQLite's decimal limitations. Django QBE 2 accumulates retrieve
 SQLite may already have converted stored decimal values through binary floating
 point. Use PostgreSQL when exact database decimal storage is required.
 
-Use a new scoped feature request for unsupported behavior
----------------------------------------------------------
+Unsupported behavior
+--------------------
 
-ManyToMany, inverse relations, multiple hops, database-native aggregates,
-multi-database selection, Excel and visual diagrams are outside this MVP. Describe
-the intended workflow and constraints in a GitHub issue instead of working around
-server-side restrictions with arbitrary SQL.
+Generic relations, more than two relationship hops, multiple collection edges in
+one field, database-native aggregates, multi-database selection, Excel and visual
+diagrams are unsupported. Describe the intended workflow and constraints in a
+GitHub issue instead of working around server-side restrictions with arbitrary SQL.

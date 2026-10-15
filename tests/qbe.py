@@ -1,11 +1,11 @@
 from django_qbe2.registry import Report, register
-from tests.models import Customer, Order, Profile
+from tests.models import Customer, Order, Pet, Profile, Tag
 
 
 @register
 class CustomerReport(Report):
     model = Customer
-    fields = ("name", "code", "credit_limit")
+    fields = ("name", "code", "credit_limit", "order__number", "pets__name")
 
     def get_queryset(self, request):
         return Customer.objects.filter(owner=request.user)
@@ -27,6 +27,9 @@ class OrderReport(Report):
         "customer__name",
         "customer__credit_limit",
         "customer_by_code__code",
+        "customer__pets__name",
+        "customer__pets__id",
+        "customer__profile__label",
     )
 
     def get_queryset(self, request):
@@ -40,3 +43,21 @@ class ProfileReport(Report):
 
     def get_queryset(self, request):
         return Profile.objects.filter(customer__owner=request.user)
+
+
+@register
+class PetReport(Report):
+    model = Pet
+    fields = ("id", "name", "tags__label")
+
+    def get_queryset(self, request):
+        return Pet.objects.filter(customer__owner=request.user)
+
+
+@register
+class TagReport(Report):
+    model = Tag
+    fields = ("label", "pets__name")
+
+    def get_queryset(self, request):
+        return Tag.objects.filter(pets__customer__owner=request.user).distinct()

@@ -1,8 +1,9 @@
 """Compile validated definitions using the Django ORM and explicit row policies."""
 
-from django.core.exceptions import ImproperlyConfigured
-from django.db.models import Model, Q, QuerySet, Subquery
+from django.core.exceptions import ValidationError
+from django.db.models import Q, QuerySet, Subquery
 from django.http import HttpRequest
+from django.utils.translation import gettext as _
 
 from django_qbe2.catalog import ReportSpec
 from django_qbe2.conditions import iter_filters
@@ -12,32 +13,35 @@ from django_qbe2.definitions import (
     QueryDefinition,
     SummaryDefinition,
 )
+from django_qbe2.relations import (
+    apply_single_relation_scopes,
+    related_exists,
+    validate_scope,
+)
 
 
-def validate_scope(queryset: QuerySet, model: type[Model]) -> QuerySet:
-    if not isinstance(queryset, QuerySet) or queryset.model is not model:
-        raise ImproperlyConfigured("Report policy must return its model's QuerySet.")
-    if queryset.db != "default":
-        raise ImproperlyConfigured("Only the default database is supported.")
-    try:
-        queryset.filter(pk__isnull=False)
-        queryset.contains(model(pk=None))
-    except TypeError as error:
-        raise ImproperlyConfigured(
-            "Report policies cannot return slices or values()."
-        ) from error
-    except ValueError:
-        # contains() rejects an unsaved instance before accessing the database.
-        pass
-    return queryset
-
-
-def compile_condition(node: FilterSpec | ConditionGroup) -> Q:
+def compile_condition(
+    node: FilterSpec | ConditionGroup,
+    report_id: str,
+    catalog: dict[str, ReportSpec],
+    request: HttpRequest,
+) -> Q:
     if isinstance(node, FilterSpec):
+        field = catalog[report_id].fields[node.field]
+        if field.multi_valued:
+            return Q(
+                related_exists(
+                    field,
+                    node.operator,
+                    node.value,
+                    catalog,
+                    request,
+                )
+            )
         return Q(**{f"{node.field}__{node.operator}": node.value})
     predicate = Q()
     for child in node.children:
-        compiled = compile_condition(child)
+        compiled = compile_condition(child, report_id, catalog, request)
         predicate = (
             predicate & compiled if node.connector == "and" else predicate | compiled
         )
@@ -53,6 +57,17 @@ def build_scoped_queryset(
     queryset = validate_scope(report.get_queryset(request), report.model)
     if isinstance(definition, SummaryDefinition):
         filters = tuple(iter_filters(definition.where))
+        summary_fields = set(definition.group_by)
+        summary_fields.update(
+            metric.field for metric in definition.metrics if metric.field is not None
+        )
+        if any(
+            catalog[definition.report].fields[path].multi_valued
+            for path in summary_fields
+        ):
+            raise ValidationError(
+                _("Multi-valued relation fields cannot be grouped or summarized.")
+            )
         used_fields = set(definition.group_by)
         used_fields.update(item.field for item in filters)
         used_fields.update(
@@ -64,28 +79,31 @@ def build_scoped_queryset(
         used_fields.update(item.field for item in filters)
         used_fields.update(item.field for item in definition.ordering)
     scoped_relations = set()
+    has_multi_valued_path = False
     for path in used_fields:
         field = catalog[definition.report].fields[path]
-        if field.relation_name is None or field.relation_name in scoped_relations:
+        if not field.relations:
             continue
-        target_report = catalog[field.target_report_id].report
-        target_scope = validate_scope(
-            target_report.get_queryset(request),
-            target_report.model,
-        )
-        lookup = f"{field.relation_name}__{field.target_key}__in"
-        queryset = queryset.filter(
-            Q(**{f"{field.relation_name}__isnull": True})
-            | Q(**{lookup: target_scope.values(field.target_key)})
-        )
-        scoped_relations.add(field.relation_name)
+        if field.multi_valued:
+            has_multi_valued_path = True
+            continue
+        relation_key = tuple(step.accessor for step in field.relations)
+        if relation_key in scoped_relations:
+            continue
+        queryset = apply_single_relation_scopes(queryset, field, catalog, request)
+        scoped_relations.add(relation_key)
     predicates = Q()
     if definition.where is not None:
-        predicates = compile_condition(definition.where)
+        predicates = compile_condition(
+            definition.where, definition.report, catalog, request
+        )
     else:
         for condition in filters:
-            predicates &= compile_condition(condition)
-    return queryset.filter(predicates)
+            predicates &= compile_condition(
+                condition, definition.report, catalog, request
+            )
+    queryset = queryset.filter(predicates)
+    return queryset.distinct() if has_multi_valued_path else queryset
 
 
 def build_queryset(
@@ -94,6 +112,11 @@ def build_queryset(
     request: HttpRequest,
 ) -> QuerySet:
     report = catalog[definition.report].report
+    if any(
+        catalog[definition.report].fields[item.field].multi_valued
+        for item in definition.ordering
+    ):
+        raise ValidationError(_("Multi-valued relation fields cannot be ordered."))
     queryset = build_scoped_queryset(definition, catalog, request)
     ordering = [
         f"{'-' if item.direction == 'desc' else ''}{item.field}"

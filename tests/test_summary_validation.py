@@ -4,7 +4,7 @@ from django.core.exceptions import ImproperlyConfigured, ValidationError
 from django.test import RequestFactory, TestCase, override_settings
 
 from tests.fixtures import grant_view, make_staff
-from tests.models import Customer, Order
+from tests.models import Customer, Order, Pet
 
 
 def summary_payload(**changes):
@@ -25,7 +25,7 @@ class SummaryValidationTests(TestCase):
         from django_qbe2.catalog import get_catalog
 
         user = make_staff("summary-validator")
-        grant_view(user, Order, Customer)
+        grant_view(user, Order, Customer, Pet)
         request = RequestFactory().get("/")
         request.user = user
         self.catalog = get_catalog(request)
@@ -161,6 +161,17 @@ class SummaryValidationTests(TestCase):
         ):
             with self.subTest(ordering=ordering):
                 self.assert_invalid({**payload, "ordering": ordering}, "ordering")
+
+    def test_multivalued_paths_are_rejected_for_grouping_and_numeric_metrics(self):
+        self.assert_invalid(
+            summary_payload(group_by=["customer__pets__name"]), "group_by"
+        )
+        self.assert_invalid(
+            summary_payload(
+                metrics=[{"id": "m1", "function": "sum", "field": "customer__pets__id"}]
+            ),
+            "metrics",
+        )
 
     def test_condition_tree_is_validated_with_existing_limits(self):
         self.assert_invalid(

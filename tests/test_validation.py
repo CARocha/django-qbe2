@@ -8,7 +8,7 @@ from django.test import RequestFactory, TestCase, override_settings
 from django.utils import timezone
 
 from tests.fixtures import grant_view, make_orders, make_staff
-from tests.models import Customer, Order
+from tests.models import Customer, Order, Pet
 
 
 def order_payload(**changes):
@@ -28,7 +28,7 @@ class ValidationTests(TestCase):
         from django_qbe2.catalog import get_catalog
 
         user = make_staff("alice")
-        grant_view(user, Order, Customer)
+        grant_view(user, Order, Customer, Pet)
         self.request = RequestFactory().get("/")
         self.request.user = user
         self.catalog = get_catalog(self.request)
@@ -142,6 +142,33 @@ class ValidationTests(TestCase):
         for payload in cases:
             with self.subTest(payload=payload), self.assertRaises(ValidationError):
                 validate_definition(payload, self.catalog)
+
+    def test_multivalued_paths_are_allowed_as_columns_and_filters_but_not_ordering(
+        self,
+    ):
+        from django_qbe2.validation import validate_definition
+
+        payload = order_payload(
+            columns=["number", "customer__pets__name"],
+            filters=[
+                {
+                    "field": "customer__pets__name",
+                    "operator": "icontains",
+                    "value": "Milo",
+                }
+            ],
+        )
+        definition = validate_definition(payload, self.catalog)
+        self.assertEqual(definition.columns, ("number", "customer__pets__name"))
+        with self.assertRaises(ValidationError) as captured:
+            validate_definition(
+                order_payload(
+                    columns=["number"],
+                    ordering=[{"field": "customer__pets__name", "direction": "asc"}],
+                ),
+                self.catalog,
+            )
+        self.assertIn("ordering", captured.exception.message_dict)
 
     def test_configurable_limits(self):
         from django_qbe2.validation import validate_definition

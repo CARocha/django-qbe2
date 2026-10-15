@@ -8,10 +8,12 @@ from typing import TYPE_CHECKING
 from django.core.exceptions import ValidationError
 from django.db import connections, transaction
 from django.db.models import QuerySet
+from django.http import HttpRequest
 
 from django_qbe2.catalog import ReportSpec
 from django_qbe2.definitions import QueryDefinition, Scalar, SummaryDefinition
 from django_qbe2.limits import get_limits
+from django_qbe2.relations import related_value_rows
 
 if TYPE_CHECKING:
     from django_qbe2.aggregation import SummaryResult
@@ -38,7 +40,7 @@ def query_timeout(*, using: str = "default"):
 
 @dataclass(frozen=True)
 class ResultPage:
-    rows: list[dict[str, Scalar]]
+    rows: list[dict[str, Scalar | tuple[Scalar, ...]]]
     labels: tuple[str, ...]
     page: int
     page_size: int
@@ -58,6 +60,7 @@ def get_page(
     definition: QueryDefinition,
     catalog: dict[str, ReportSpec],
     *,
+    request: HttpRequest,
     page: int,
     page_size: int,
 ) -> ResultPage:
@@ -73,11 +76,29 @@ def get_page(
     if page > num_pages:
         raise ValidationError({"page": "This page does not exist."})
     start = (page - 1) * page_size
-    with query_timeout():
-        rows = list(
-            queryset.values(*definition.columns)[start : min(start + page_size, total)]
-        )
     fields = catalog[definition.report].fields
+    collection_paths = [
+        path for path in definition.columns if fields[path].multi_valued
+    ]
+    scalar_paths = [path for path in definition.columns if path not in collection_paths]
+    root_values = queryset.values("pk", *scalar_paths)
+    related_count = 0
+    with query_timeout():
+        rows = list(root_values[start : min(start + page_size, total)])
+        root_ids = [row.pop("pk") for row in rows]
+        for path in collection_paths:
+            related_by_root = {root_id: [] for root_id in root_ids}
+            for root_id, _target_id, value in related_value_rows(
+                fields[path], catalog, request, root_ids
+            ).iterator(chunk_size=200):
+                related_count += 1
+                if related_count > limits.max_related_values:
+                    raise ValidationError(
+                        "Too many related values. Refine the report and try again."
+                    )
+                related_by_root[root_id].append(value)
+            for root_id, row in zip(root_ids, rows, strict=True):
+                row[path] = tuple(related_by_root[root_id])
     return ResultPage(
         rows,
         tuple(fields[path].label for path in definition.columns),

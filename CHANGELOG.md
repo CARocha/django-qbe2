@@ -1,6 +1,21 @@
 # Changelog
 
-## 0.1.0a7 — release candidate
+## 0.1.0a8 — release candidate
+
+### Added
+
+- Reverse ForeignKey/OneToOne and forward/reverse ManyToMany paths up to two hops.
+- Related-row permission and queryset-policy enforcement across each relationship.
+- Existential filters and bounded, stable collection values in HTML and CSV, keeping
+  one output row per root record.
+- ``QBE2_MAX_RELATED_VALUES`` to bound related values materialized in each result
+  page or complete export.
+- Validation that keeps multi-valued paths out of row ordering, summary grouping and
+  numeric summary metrics.
+
+Saved definition versions remain unchanged; no package database migration is needed.
+
+## 0.1.0a7 — 2026-10-14
 
 ### Added
 

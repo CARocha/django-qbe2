@@ -12,6 +12,23 @@ class Customer(models.Model):
     credit_limit = models.DecimalField(max_digits=12, decimal_places=2, null=True)
 
 
+class Pet(models.Model):
+    customer = models.ForeignKey(
+        Customer, related_name="pets", on_delete=models.CASCADE
+    )
+    name = models.CharField(max_length=100)
+    tags = models.ManyToManyField("Tag", through="PetTag", related_name="pets")
+
+
+class Tag(models.Model):
+    label = models.CharField(max_length=100)
+
+
+class PetTag(models.Model):
+    pet = models.ForeignKey(Pet, on_delete=models.CASCADE)
+    tag = models.ForeignKey(Tag, on_delete=models.CASCADE)
+
+
 class Order(models.Model):
     owner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     customer = models.ForeignKey(Customer, null=True, on_delete=models.SET_NULL)

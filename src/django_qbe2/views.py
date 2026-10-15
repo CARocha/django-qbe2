@@ -7,7 +7,7 @@ from django.core.exceptions import PermissionDenied, ValidationError
 from django.db import models
 from django.http import Http404, HttpRequest, HttpResponse
 from django.shortcuts import render
-from django.utils.html import escape
+from django.utils.html import escape, format_html_join
 from django.utils.translation import gettext as _
 from django.views.decorators.http import require_GET, require_POST
 
@@ -32,6 +32,16 @@ from django_qbe2.summary_forms import compact_metrics, compact_summary_ordering
 from django_qbe2.validation import validate_definition
 
 logger = logging.getLogger(__name__)
+
+
+def present_cell(value, labels):
+    if isinstance(value, tuple):
+        if not value:
+            return None
+        return format_html_join(
+            ", ", "{}", ((labels.get(item, item),) for item in value)
+        )
+    return labels.get(value, value)
 
 
 def report_errors(view):
@@ -370,6 +380,7 @@ def results_view(request: HttpRequest):
                 queryset,
                 form.definition,
                 catalog,
+                request=request,
                 page=page_number,
                 page_size=form.cleaned_data["page_size"],
             )
@@ -395,7 +406,7 @@ def results_view(request: HttpRequest):
         }
         table_rows = [
             tuple(
-                choice_labels[column.key].get(row[column.key], row[column.key])
+                present_cell(row[column.key], choice_labels[column.key])
                 for column in output_columns
             )
             for row in page.rows
@@ -410,7 +421,7 @@ def results_view(request: HttpRequest):
         }
         table_rows = [
             tuple(
-                choice_labels[path].get(row[path], row[path])
+                present_cell(row[path], choice_labels[path])
                 for path in form.definition.columns
             )
             for row in page.rows
@@ -466,4 +477,13 @@ def export_view(request: HttpRequest):
             )
         return summary_csv_response(result, form.definition)
     queryset = build_queryset(form.definition, catalog, request)
-    return csv_response(queryset, form.definition, catalog)
+    try:
+        return csv_response(queryset, form.definition, catalog, request=request)
+    except ValidationError as error:
+        form.add_error(None, error.messages)
+        return render(
+            request,
+            "django_qbe2/builder.html",
+            builder_context(request, catalog, form),
+            status=400,
+        )
