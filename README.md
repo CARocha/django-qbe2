@@ -2,11 +2,11 @@
 
 A reusable Django app for building authorized reports without writing SQL.
 Choose columns, add typed conditions, follow model relationships, preview paginated
-results and export a CSV. Supports **Python 3.13–3.14 and Django 6.0–6.1**.
+results, build grouped summaries and export CSV. Supports **Python 3.13–3.14 and Django 6.0–6.1**.
 
 **Experimental alpha:** this is the initial implementation, not a production
 release or a drop-in replacement for the original package. The current release
-candidate is `0.1.0a6`; check [PyPI](https://pypi.org/project/django-qbe2/) for its
+candidate is `0.1.0a7`; check [PyPI](https://pypi.org/project/django-qbe2/) for its
 availability. Inspired by [versae/qbe](https://github.com/versae/qbe), rebuilt around
 Django's ORM, explicit permissions and typed query definitions.
 
@@ -34,14 +34,14 @@ In your project's virtual environment, install the explicit alpha version after
 checking its availability on PyPI:
 
 ```sh
-python -m pip install django-qbe2==0.1.0a6
+python -m pip install django-qbe2==0.1.0a7
 ```
 
 To try the checkout before publication, build and install its wheel:
 
 ```sh
 uv build
-python -m pip install /absolute/path/to/dist/django_qbe2-0.1.0a6-py3-none-any.whl
+python -m pip install /absolute/path/to/dist/django_qbe2-0.1.0a7-py3-none-any.whl
 ```
 
 Add the app and mount its namespaced URLs alongside Django Admin:
@@ -108,7 +108,8 @@ upgrading. Preview a report to save its definition, then use **Saved queries** t
 reopen it or manage named recipients. Sharing never grants model permissions or
 access to the creator's rows. See the [saved-query guide](docs/source/saved_queries.rst)
 and [roadmap](docs/source/roadmap.rst). Condition groups preserve existing saved
-definitions and require no additional migration.
+definitions and require no additional migration. Summary definitions use the same
+storage, sharing and current-user authorization rules.
 
 ## What is included
 
@@ -116,12 +117,13 @@ definitions and require no additional migration.
 - Generic model-choice selectors and readable HTML labels; CSV keeps stored codes.
 - Saved definitions, private by default, with explicit reader/copy sharing.
 - Bounded nested AND/OR/NOT groups, ascending/descending order and stable pagination.
+- Grouped or ungrouped Count, Sum and Average reports over authorized source rows.
 - One forward ForeignKey/OneToOne hop with related-row authorization.
 - Bounded CSV streaming, exact decimals, Unicode and safe text formula handling.
 - Django Admin styling, light/dark modes and responsive, keyboard-accessible controls.
 
-Aggregates, ManyToMany, inverse relationships,
-arbitrary joins, multi-database selection, Excel and the visual diagram are later work.
+ManyToMany, inverse relationships, database-native aggregates, arbitrary joins,
+multi-database selection, Excel and the visual diagram are later work.
 CSV uses a synchronous streaming iterator intended for WSGI deployment.
 See the [public documentation](https://github.com/CARocha/django-qbe2/blob/main/docs/README.md) for installation, row policies,
 settings, API reference and troubleshooting. Sources are plain English

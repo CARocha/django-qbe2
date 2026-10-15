@@ -85,10 +85,23 @@ budgets for your workload. CSV interrupted after its headers may end without an
 HTML error page. Logs identify the exception class; inspect your own database
 monitoring for the underlying failure without exposing sensitive query input.
 
+A summary has two distinct bounds. ``QBE2_MAX_AGGREGATE_ROWS`` limits authorized
+source rows and rejects the request before returning any partial total.
+``QBE2_MAX_ROWS`` limits completed groups shown or exported and reports truncation.
+Raise the source bound only after considering memory and request time.
+
+Summary totals look different on SQLite
+----------------------------------------
+
+Django documents SQLite's decimal limitations. Django QBE 2 accumulates retrieved
+``DecimalField`` values with Python ``Decimal`` and rounds Average half-even, but
+SQLite may already have converted stored decimal values through binary floating
+point. Use PostgreSQL when exact database decimal storage is required.
+
 Use a new scoped feature request for unsupported behavior
 ---------------------------------------------------------
 
-Aggregates, ManyToMany, inverse relations, multiple hops,
+ManyToMany, inverse relations, multiple hops, database-native aggregates,
 multi-database selection, Excel and visual diagrams are outside this MVP. Describe
 the intended workflow and constraints in a GitHub issue instead of working around
 server-side restrictions with arbitrary SQL.

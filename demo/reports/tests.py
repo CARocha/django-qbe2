@@ -54,6 +54,62 @@ class DemoReportTests(TestCase):
         )
         self.assertNotContains(response, "Birch")
 
+    def test_grouped_summary_uses_registered_numeric_fields_and_owner_scope(self):
+        from demo.reports.models import Customer, Order
+
+        alice = get_user_model().objects.create_user(username="alice", is_staff=True)
+        bob = get_user_model().objects.create_user(username="bob", is_staff=True)
+        alice.user_permissions.add(
+            *Permission.objects.filter(
+                content_type__app_label="demo",
+                codename__in=["view_order", "view_customer"],
+            )
+        )
+        own = Customer.objects.create(owner=alice, name="Atlas", city="León")
+        foreign = Customer.objects.create(owner=bob, name="Birch", city="Granada")
+        Order.objects.create(
+            owner=alice, customer=own, number="A100", total="100.01", status="paid"
+        )
+        Order.objects.create(
+            owner=alice, customer=own, number="A200", total="200.00", status="paid"
+        )
+        Order.objects.create(
+            owner=bob, customer=foreign, number="B100", total="900.00", status="paid"
+        )
+        self.client.force_login(alice)
+        response = self.client.post(
+            reverse("django_qbe2:results"),
+            {
+                "definition": json.dumps(
+                    {
+                        "version": 3,
+                        "report": "demo.order",
+                        "where": {
+                            "connector": "and",
+                            "negated": False,
+                            "children": [],
+                        },
+                        "group_by": ["status"],
+                        "metrics": [
+                            {"id": "m1", "function": "count", "field": None},
+                            {"id": "m2", "function": "sum", "field": "total"},
+                        ],
+                        "ordering": [
+                            {"type": "group", "field": "status", "direction": "asc"}
+                        ],
+                    }
+                )
+            },
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context["source_count"], 2)
+        self.assertEqual(
+            response.context["page"].labels,
+            ("Order status", "Count records", "Sum of Total amount"),
+        )
+        self.assertEqual(response.context["page"].rows[0]["metric:m1"], 2)
+        self.assertEqual(str(response.context["page"].rows[0]["metric:m2"]), "300.01")
+
 
 class SeedDemoTests(TestCase):
     def test_repeat_preserves_counts(self):

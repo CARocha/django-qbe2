@@ -12,7 +12,9 @@ from pathlib import Path
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--index", choices=("testpypi", "pypi"), required=True)
+    source = parser.add_mutually_exclusive_group(required=True)
+    source.add_argument("--index", choices=("testpypi", "pypi"))
+    source.add_argument("--wheel", type=Path)
     args = parser.parse_args()
     root = Path(__file__).resolve().parent.parent
     release = tomllib.loads((root / "pyproject.toml").read_text())["project"]["version"]
@@ -37,7 +39,15 @@ def main() -> None:
             f"Django=={installed_version('Django')}",
             cwd=temporary,
         )
-        host = "test.pypi.org" if args.index == "testpypi" else "pypi.org"
+        if args.wheel:
+            install_args = [str(args.wheel.resolve())]
+        else:
+            host = "test.pypi.org" if args.index == "testpypi" else "pypi.org"
+            install_args = [
+                "--index-url",
+                f"https://{host}/simple/",
+                f"django-qbe2=={release}",
+            ]
         run(
             "uv",
             "pip",
@@ -45,9 +55,7 @@ def main() -> None:
             "--python",
             python,
             "--no-deps",
-            "--index-url",
-            f"https://{host}/simple/",
-            f"django-qbe2=={release}",
+            *install_args,
             cwd=temporary,
         )
         consumer = temporary / "consumer-project"
@@ -62,9 +70,15 @@ def main() -> None:
             cwd=temporary,
         )
         settings = consumer / "consumer/settings.py"
+        run(python, "manage.py", "startapp", "sales", cwd=consumer)
+        for filename in ("models.py", "qbe.py"):
+            (consumer / "sales" / filename).write_text(
+                (root / "docs/source/examples" / filename).read_text()
+            )
         settings.write_text(
             settings.read_text()
-            + '\nINSTALLED_APPS.append("django_qbe2")\nALLOWED_HOSTS = ["testserver"]\n'
+            + '\nINSTALLED_APPS += ["sales", "django_qbe2"]\n'
+            + 'ALLOWED_HOSTS = ["testserver"]\n'
         )
         urls = consumer / "consumer/urls.py"
         urls.write_text(
@@ -73,6 +87,7 @@ def main() -> None:
             + 'urlpatterns.append(path("qbe/", include("django_qbe2.urls")))\n'
         )
         run(python, "manage.py", "check", cwd=consumer)
+        run(python, "manage.py", "makemigrations", "sales", cwd=consumer)
         run(python, "manage.py", "migrate", "--noinput", cwd=consumer)
         run(
             python,
@@ -80,14 +95,16 @@ def main() -> None:
             """
 import os, sys
 from pathlib import Path
+import json
 os.environ['DJANGO_SETTINGS_MODULE'] = 'consumer.settings'
 import django
 django.setup()
 import django_qbe2
 assert Path(django_qbe2.__file__).is_relative_to(Path(sys.prefix))
 from django.contrib.auth.models import User
-from django.contrib.staticfiles import finders
+from django.contrib.auth.models import Permission
 from django.test import Client
+from django.contrib.staticfiles import finders
 user = User.objects.create_user('qbe2_smoke', is_staff=True)
 client = Client()
 client.force_login(user)
@@ -96,6 +113,34 @@ assert response.status_code == 200, response.content
 assert b'No reports available' in response.content
 assert finders.find('django_qbe2/builder.js')
 print('Published package installation, Django checks, templates and assets passed.')
+from decimal import Decimal
+from sales.models import Customer, Order
+user = User.objects.create_user('summary-user', is_staff=True)
+user.user_permissions.add(*Permission.objects.filter(
+    content_type__app_label='sales', codename__in=['view_order', 'view_customer']))
+customer = Customer.objects.create(owner=user, name='Summary customer')
+Order.objects.create(owner=user, customer=customer, number='S100', total='12.30')
+Order.objects.create(owner=user, customer=customer, number='S200', total='7.70')
+client.force_login(user)
+base = {
+    'version': 3, 'report': 'sales.order',
+    'where': {'connector': 'and', 'negated': False, 'children': []},
+    'group_by': [],
+    'metrics': [
+        {'id': 'm1', 'function': 'count', 'field': None},
+        {'id': 'm2', 'function': 'sum', 'field': 'total'},
+    ],
+    'ordering': [],
+}
+summary = client.post('/qbe/results/', {'definition': json.dumps(base)})
+assert summary.status_code == 200, summary.content
+assert b'2 source records' in summary.content and b'20.00' in summary.content
+grouped = {**base, 'group_by': ['status'], 'ordering': [
+    {'type': 'group', 'field': 'status', 'direction': 'asc'}]}
+grouped_result = client.post('/qbe/results/', {'definition': json.dumps(grouped)})
+assert grouped_result.status_code == 200, grouped_result.content
+assert b'1 group' in grouped_result.content and b'20.00' in grouped_result.content
+print('Installed wheel ungrouped and grouped v3 summaries passed.')
 """,
             cwd=consumer,
         )

@@ -94,7 +94,8 @@ CSV behavior
 ------------
 
 The CSV button exports all matching rows up to the report cap, not only the
-current page. Column order, row policies and related-row checks match HTML.
+current page. For a Summary report it exports completed groups and calculations,
+ordered exactly like the preview. Column order, row policies and related-row checks match HTML.
 UTF-8 text supports Unicode, quotes and embedded newlines. Dates/times use ISO
 format, decimals preserve precision, booleans use ``true``/``false``, and null
 becomes an empty cell.
@@ -109,6 +110,8 @@ ASGI; ASGI-native streaming is not advertised. A first-row preflight catches ear
 errors. Later errors abort the download and are logged by exception class without
 SQL or query payloads. Headers already sent cannot change to a new error status.
 Closing or failing the stream releases its cursor and timeout context.
+Summary execution finishes before CSV headers are returned, so a source-limit or
+calculation error produces an ordinary error response rather than a partial file.
 
 Query definition v1
 -------------------
@@ -189,6 +192,69 @@ boolean, and children is a list of groups or ordinary filter leaves. Every branc
 is validated against the current catalog. Unknown keys and excessive trees are
 rejected. Form group identifiers do not appear in the saved definition. Rebuilding
 controls may reorder siblings; AND/OR results do not depend on sibling order.
+
+Summary reports and definition v3
+---------------------------------
+
+Choose **Summary** under Report type and apply it. Select zero to three grouping
+fields and one to ten calculations. **Count records** needs no field; **Sum** and
+**Average** offer only registered integer and decimal fields. Add calculation
+works with or without JavaScript and assigns stable ``m1``, ``m2`` identifiers.
+Switching report type preserves the report and conditions while resetting output
+columns, calculations and ordering. It does not update a saved query until you
+explicitly save or update it.
+
+With no grouping fields, a summary returns one row. Count is zero for an empty
+source; Sum and Average are empty. With grouping fields, an empty source returns
+no groups. NULL forms its own group and renders/exports as an empty cell. Count
+includes every authorized source row. Sum and Average ignore NULL metric values;
+if all values are NULL their result is empty. Decimal values remain ``Decimal``;
+Average uses at least six fractional places and half-even rounding. Integer Average
+also returns a decimal value.
+
+The source is a distinct set of authorized root primary keys selected from
+``Report.get_queryset(request)`` after conditions and related-field policies. This
+prevents joins from counting one root row repeatedly while preserving consumer
+annotations, filters and valid distinct semantics. Calculations run in bounded
+Python over selected group/metric values. They do not execute client SQL or mutate
+business data.
+
+.. code-block:: json
+
+   {
+     "version": 3,
+     "report": "sales.order",
+     "where": {
+       "connector": "and",
+       "negated": false,
+       "children": [
+         {"field": "status", "operator": "exact", "value": "paid"}
+       ]
+     },
+     "group_by": ["customer__city"],
+     "metrics": [
+       {"id": "m1", "function": "count", "field": null},
+       {"id": "m2", "function": "sum", "field": "total"},
+       {"id": "m3", "function": "avg", "field": "total"}
+     ],
+     "ordering": [
+       {"type": "metric", "id": "m2", "direction": "desc"},
+       {"type": "group", "field": "customer__city", "direction": "asc"}
+     ]
+   }
+
+All six top-level keys are required. Grouping fields and calculations must be
+distinct and currently authorized. Metric IDs use ``m`` followed by a positive
+integer and ordering references a selected group field or metric ID. Every branch
+of ``where`` uses the same v2 condition-tree rules. Unknown keys, client-provided
+labels, unsupported numeric fields and excessive controls are rejected.
+
+The default source cap is 10,000 authorized roots. Crossing it fails the entire
+summary without returning partial totals. The ordinary 10,000-row output cap is
+applied later to complete, deterministically ordered groups; preview and CSV then
+show truncation. Related grouping or metric fields activate the same target report
+permissions and target row policy used by row reports. Sharing a v3 definition
+never shares its creator's source rows or totals.
 
 NULL and authorization semantics
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

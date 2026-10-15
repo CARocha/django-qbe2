@@ -99,12 +99,18 @@ outside this feature. The storage and form helpers are internal APIs; the suppor
 integration remains app installation, namespaced routes, settings and report registration.
 
 
-Grouped definitions
--------------------
+Grouped and summary definitions
+-------------------------------
 
 Saved definitions accept both the original v1 AND filters and v2 AND/OR/NOT
 trees. No migration or bulk rewrite is needed for condition groups. Opening an
 existing v1 definition does not modify it. Saving edits with groups uses v2;
 opening, copying, pagination and CSV preserve the expression. All branches are
 revalidated against the executing user's current catalog and row policies.
-See :doc:`querying` for the format, group limits and NULL semantics.
+
+Summary definitions use v3 and store only grouping fields, calculation choices,
+conditions and ordering. They never store totals or source rows. No additional
+database migration is needed. Opening, copying, sharing, updating, pagination and
+CSV use the same owner/reader rules as row reports. Each execution recalculates the
+summary from the executing user's current authorized rows and related-field scopes.
+See :doc:`querying` for the formats, limits and NULL semantics.

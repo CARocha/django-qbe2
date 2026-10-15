@@ -17,12 +17,13 @@ Completed increments
 
 - Bounded AND/OR/NOT groups with versioned definitions and unchanged row policies
   (``0.1.0a6`` candidate; see :doc:`querying`).
+- Authorized Count, Sum and Average summaries with up to three grouping fields,
+  bounded source/output rows, saved definitions and CSV (``0.1.0a7`` candidate;
+  see :doc:`querying`).
 
 Next scoped increments
 ----------------------
 
-#. **Aggregates and grouping:** authorized count/sum/average and grouped results,
-   with deliberate handling of decimals, NULL and report budgets.
 #. **More relationships:** evaluate ManyToMany and reverse relations with explicit
    related-row policies and tests for duplicate rows and aggregate semantics.
 #. **Visual exploration:** a diagram derived only from the authorized catalog,
@@ -33,5 +34,6 @@ public documentation and a compatibility check before integration. This order
 sets priorities, not release dates or a promise of full SQL parity.
 
 Other ideas needing separate design include custom operators, multiple database
-aliases, Excel export, a public REST API, group sharing and scheduled reports.
+aliases, database-native aggregate execution, Excel export, a public REST API,
+group sharing and scheduled reports.
 Arbitrary client SQL and Python evaluation remain outside the intended interface.
