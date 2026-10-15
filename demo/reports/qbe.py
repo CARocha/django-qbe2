@@ -36,6 +36,7 @@ class OrderReport(Report):
         "customer__name": "Customer",
         "customer__city": "City",
         "total": "Total amount",
+        "status": "Order status",
     }
 
     def get_queryset(self, request):

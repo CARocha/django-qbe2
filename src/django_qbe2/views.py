@@ -12,11 +12,13 @@ from django.utils.translation import gettext as _
 from django.views.decorators.http import require_GET, require_POST
 
 from django_qbe2.access import require_qbe_access
+from django_qbe2.aggregation import paginate_summary
 from django_qbe2.catalog import get_catalog
 from django_qbe2.choices import choice_value
-from django_qbe2.engine import build_queryset
-from django_qbe2.execution import get_page
-from django_qbe2.exports import csv_response
+from django_qbe2.definitions import SummaryDefinition
+from django_qbe2.engine import build_queryset, build_summary_source
+from django_qbe2.execution import execute_summary, get_page
+from django_qbe2.exports import csv_response, summary_csv_response
 from django_qbe2.forms import OPERATOR_LABELS, QueryBuilderForm, payload_form_data
 from django_qbe2.group_forms import (
     compact_controls,
@@ -26,6 +28,7 @@ from django_qbe2.group_forms import (
 from django_qbe2.limits import get_limits
 from django_qbe2.saved import get_saved_query
 from django_qbe2.saved_forms import SavedQueryNameForm
+from django_qbe2.summary_forms import compact_metrics, compact_summary_ordering
 from django_qbe2.validation import validate_definition
 
 logger = logging.getLogger(__name__)
@@ -199,6 +202,122 @@ def builder_action(request, catalog, saved_query):
     )
 
 
+def _replace_formset(data, prefix, rows, maximum):
+    for key in list(data):
+        if key.startswith(f"{prefix}-"):
+            del data[key]
+    data.update(
+        {
+            f"{prefix}-TOTAL_FORMS": str(len(rows)),
+            f"{prefix}-INITIAL_FORMS": "0",
+            f"{prefix}-MIN_NUM_FORMS": "0",
+            f"{prefix}-MAX_NUM_FORMS": str(maximum),
+        }
+    )
+    for index, row in enumerate(rows):
+        for key, value in row.items():
+            data[f"{prefix}-{index}-{key}"] = value
+
+
+def summary_builder_action(request, catalog, saved_query):
+    limits = get_limits()
+    data = default_group_data(request.POST, limits).copy()
+    action = request.POST.get("action")
+    status = 200
+    try:
+        if action == "apply_mode":
+            mode = data.get("mode")
+            if mode not in ("rows", "summary"):
+                raise ValidationError(_("Choose Rows or Summary."))
+            report_id = data.get("report")
+            fields = catalog[report_id].fields if report_id in catalog else {}
+            data.setlist("group_by", [])
+            _replace_formset(
+                data,
+                "ordering",
+                [{"field": "", "direction": "asc"}] if mode == "rows" else [],
+                limits.max_ordering,
+            )
+            _replace_formset(data, "summary_ordering", [], limits.max_ordering)
+            _replace_formset(
+                data,
+                "metrics",
+                [{"id": "m1", "function": "count", "field": ""}],
+                limits.max_metrics,
+            )
+            data.setlist("columns", list(fields)[:2] if mode == "rows" else [])
+        elif action == "add_metric":
+            form = QueryBuilderForm(data, catalog=catalog, structure_only=True)
+            if not form.groups.is_valid():
+                raise ValidationError(_("Correct the condition groups below."))
+            validate_structure(form.groups.cleaned_data, limits)
+            data = compact_metrics(data, form.metrics, limits.max_metrics)
+            count = int(data["metrics-TOTAL_FORMS"])
+            if count >= limits.max_metrics:
+                raise ValidationError(_("The calculation limit was reached."))
+            used = {data.get(f"metrics-{index}-id") for index in range(count)}
+            identity = next(
+                f"m{number}"
+                for number in range(1, limits.max_metrics + 2)
+                if f"m{number}" not in used
+            )
+            data.update(
+                {
+                    f"metrics-{count}-id": identity,
+                    f"metrics-{count}-function": "",
+                    f"metrics-{count}-field": "",
+                    "metrics-TOTAL_FORMS": str(count + 1),
+                    "mode": "summary",
+                }
+            )
+        elif action == "add_summary_ordering":
+            form = QueryBuilderForm(data, catalog=catalog, structure_only=True)
+            if not form.groups.is_valid():
+                raise ValidationError(_("Correct the conditions below."))
+            validate_structure(form.groups.cleaned_data, limits)
+            data = compact_summary_ordering(
+                data, form.summary_ordering, limits.max_ordering
+            )
+            count = int(data["summary_ordering-TOTAL_FORMS"])
+            if not count or data.get(f"summary_ordering-{count - 1}-target"):
+                if count >= limits.max_ordering:
+                    raise ValidationError(_("The ordering limit was reached."))
+                data.update(
+                    {
+                        f"summary_ordering-{count}-target": "",
+                        f"summary_ordering-{count}-direction": "asc",
+                        "summary_ordering-TOTAL_FORMS": str(count + 1),
+                    }
+                )
+            data["mode"] = "summary"
+        else:
+            raise ValidationError(_("Choose an available builder action."))
+        form = QueryBuilderForm(data, catalog=catalog, structure_only=True)
+        form.is_valid()
+        if action == "add_metric" and form.metrics.forms:
+            form.metrics.forms[-1].fields["function"].widget.attrs["autofocus"] = True
+        if action == "add_summary_ordering" and form.summary_ordering.forms:
+            form.summary_ordering.forms[-1].fields["target"].widget.attrs[
+                "autofocus"
+            ] = True
+    except (ValidationError, ValueError) as error:
+        form = QueryBuilderForm(data, catalog=catalog, structure_only=True)
+        form.is_valid()
+        form.add_error(
+            None,
+            error.messages
+            if isinstance(error, ValidationError)
+            else _("Invalid calculation controls."),
+        )
+        status = 400
+    return render(
+        request,
+        "django_qbe2/builder.html",
+        {**builder_context(request, catalog, form), "saved_query": saved_query},
+        status=status,
+    )
+
+
 @require_qbe_access
 @require_POST
 @report_errors
@@ -217,6 +336,12 @@ def results_view(request: HttpRequest):
         "add_group",
     ):
         return builder_action(request, catalog, saved_query)
+    if request.POST.get("action") in (
+        "apply_mode",
+        "add_metric",
+        "add_summary_ordering",
+    ):
+        return summary_builder_action(request, catalog, saved_query)
     form = query_form(request, catalog)
     if not form.is_valid() or request.POST.get("action") == "edit":
         status = 200 if form.is_valid() else 400
@@ -228,14 +353,26 @@ def results_view(request: HttpRequest):
         )
     try:
         page_number = int(request.POST.get("page", "1"))
-        queryset = build_queryset(form.definition, catalog, request)
-        page = get_page(
-            queryset,
-            form.definition,
-            catalog,
-            page=page_number,
-            page_size=form.cleaned_data["page_size"],
-        )
+        summary_result = None
+        if isinstance(form.definition, SummaryDefinition):
+            queryset = build_summary_source(form.definition, catalog, request)
+            summary_result = execute_summary(queryset, form.definition, catalog)
+            page = paginate_summary(
+                summary_result,
+                form.definition,
+                page=page_number,
+                page_size=form.cleaned_data["page_size"],
+                max_rows=get_limits().max_rows,
+            )
+        else:
+            queryset = build_queryset(form.definition, catalog, request)
+            page = get_page(
+                queryset,
+                form.definition,
+                catalog,
+                page=page_number,
+                page_size=form.cleaned_data["page_size"],
+            )
     except (ValidationError, ValueError) as error:
         messages = (
             error.messages
@@ -249,13 +386,35 @@ def results_view(request: HttpRequest):
             {**builder_context(request, catalog, form), "saved_query": saved_query},
             status=400,
         )
-    choice_labels = {
-        path: {
-            value: escape(label)
-            for value, label in catalog[form.definition.report].fields[path].choices
+    is_summary = isinstance(form.definition, SummaryDefinition)
+    if is_summary:
+        output_columns = summary_result.columns
+        choice_labels = {
+            column.key: {value: escape(label) for value, label in column.choices}
+            for column in output_columns
         }
-        for path in form.definition.columns
-    }
+        table_rows = [
+            tuple(
+                choice_labels[column.key].get(row[column.key], row[column.key])
+                for column in output_columns
+            )
+            for row in page.rows
+        ]
+    else:
+        choice_labels = {
+            path: {
+                value: escape(label)
+                for value, label in catalog[form.definition.report].fields[path].choices
+            }
+            for path in form.definition.columns
+        }
+        table_rows = [
+            tuple(
+                choice_labels[path].get(row[path], row[path])
+                for path in form.definition.columns
+            )
+            for row in page.rows
+        ]
     context = {
         **admin.site.each_context(request),
         "title": _("Report results"),
@@ -267,15 +426,13 @@ def results_view(request: HttpRequest):
             initial={"name": saved_query.name if saved_query else ""}
         ),
         "page": page,
+        "is_summary": is_summary,
+        "is_grouped": is_summary and bool(form.definition.group_by),
+        "source_count": summary_result.source_count if is_summary else None,
+        "group_count": len(summary_result.rows) if is_summary else None,
         "definition_json": json.dumps(form.payload),
         "limit": get_limits().max_rows,
-        "table_rows": [
-            tuple(
-                choice_labels[path].get(row[path], row[path])
-                for path in form.definition.columns
-            )
-            for row in page.rows
-        ],
+        "table_rows": table_rows,
         "previous_page": page.page - 1,
         "next_page": page.page + 1,
     }
@@ -295,5 +452,18 @@ def export_view(request: HttpRequest):
             builder_context(request, catalog, form),
             status=400,
         )
+    if isinstance(form.definition, SummaryDefinition):
+        try:
+            queryset = build_summary_source(form.definition, catalog, request)
+            result = execute_summary(queryset, form.definition, catalog)
+        except ValidationError as error:
+            form.add_error(None, error.messages)
+            return render(
+                request,
+                "django_qbe2/builder.html",
+                builder_context(request, catalog, form),
+                status=400,
+            )
+        return summary_csv_response(result, form.definition)
     queryset = build_queryset(form.definition, catalog, request)
     return csv_response(queryset, form.definition, catalog)

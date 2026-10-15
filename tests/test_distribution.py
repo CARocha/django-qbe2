@@ -42,10 +42,13 @@ class DistributionTests(SimpleTestCase):
                 source_names = archive.getnames()
             for names in (wheel_names, source_names):
                 for asset in (
+                    "aggregation.py",
+                    "summary_forms.py",
                     "templates/django_qbe2/builder.html",
                     "templates/django_qbe2/saved_list.html",
                     "migrations/0001_initial.py",
                     "static/django_qbe2/builder.js",
+                    "static/django_qbe2/qbe.css",
                 ):
                     self.assertTrue(any(name.endswith(asset) for name in names))
                 self.assertFalse(
@@ -201,6 +204,36 @@ assert b'>A100</td>' in grouped_result.content
 assert b'>Hidden</td>' not in grouped_result.content
 assert b'>B200</td>' not in grouped_result.content
 print('Installed wheel condition groups retain root and related scopes.')
+summary = {
+    'version': 3, 'report': 'sales.order',
+    'where': {'connector': 'and', 'negated': False, 'children': []},
+    'group_by': [],
+    'metrics': [
+        {'id': 'm1', 'function': 'count', 'field': None},
+        {'id': 'm2', 'function': 'sum', 'field': 'total'},
+    ],
+    'ordering': [],
+}
+summary_result = client.post('/qbe/results/', {'definition': json.dumps(summary)})
+assert summary_result.status_code == 200, summary_result.content
+assert (
+    b'2 source records' in summary_result.content
+    and b'250.01' in summary_result.content
+)
+grouped_summary = {**summary, 'group_by': ['status'], 'ordering': [
+    {'type': 'group', 'field': 'status', 'direction': 'asc'}]}
+grouped_result = client.post(
+    '/qbe/results/', {'definition': json.dumps(grouped_summary)})
+assert grouped_result.status_code == 200, grouped_result.content
+assert b'1 group' in grouped_result.content and b'250.01' in grouped_result.content
+summary_export = client.post(
+    '/qbe/export/', {'definition': json.dumps(grouped_summary)})
+assert summary_export.status_code == 200 and summary_export.streaming
+summary_rows = list(csv.reader(io.StringIO(
+    b''.join(summary_export.streaming_content).decode())))
+assert summary_rows[1] == ['open', '2', '250.01'], summary_rows
+summary_export.close()
+print('Installed wheel ungrouped/grouped summaries and summary CSV passed.')
 
 from django_qbe2.models import SavedQuery
 saved = client.post('/qbe/saved/create/', {
@@ -229,4 +262,8 @@ print('Custom-user migration, shared definitions, scoped execution and copy pass
             self.assertIn("Clean consumer installation and render passed.", output)
             self.assertIn(
                 "Documented consumer report policies, HTML and CSV passed.", output
+            )
+            self.assertIn(
+                "Installed wheel ungrouped/grouped summaries and summary CSV passed.",
+                output,
             )

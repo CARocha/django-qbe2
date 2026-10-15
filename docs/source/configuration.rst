@@ -34,17 +34,28 @@ booleans are rejected. ``QBE2_PAGE_SIZE`` cannot exceed ``QBE2_MAX_PAGE_SIZE``.
    * - ``QBE2_MAX_ORDERING``
      - 3
      - Maximum explicit sort keys
+   * - ``QBE2_MAX_GROUP_BY``
+     - 3
+     - Maximum fields used to group a summary
+   * - ``QBE2_MAX_METRICS``
+     - 10
+     - Maximum count, sum and average calculations in a summary
+   * - ``QBE2_MAX_AGGREGATE_ROWS``
+     - 10,000
+     - Maximum authorized source rows used to calculate a summary
    * - ``QBE2_MAX_ROWS``
      - 10,000
-     - Maximum report/export rows
+     - Maximum row results or completed summary groups returned/exported
    * - ``QBE2_MAX_SAVED_QUERIES``
      - 100
      - Maximum stored definitions per owner, including copies
 
 PostgreSQL report statements run with a 5-second statement timeout and restore the
-previous connection setting. This timeout is currently an internal constant, not a
+previous connection setting. Summary source reads use the same timeout. This timeout is currently an internal constant, not a
 public Django setting. SQLite has the same row/page budgets but no equivalent
-statement timeout. Choose row budgets for your data and existing database indexes.
+statement timeout. Choose both source and output budgets for your data and existing
+database indexes. A summary exceeding the source cap fails without partial totals;
+an output exceeding ``QBE2_MAX_ROWS`` is truncated only after complete calculations.
 
 Namespaced routes
 -----------------

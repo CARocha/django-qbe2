@@ -1,5 +1,6 @@
 import hashlib
 import tempfile
+import tomllib
 from copy import deepcopy
 from pathlib import Path
 from unittest import TestCase
@@ -11,6 +12,12 @@ SHA = "a" * 40
 
 
 class ReleaseChecksTests(TestCase):
+    def test_repository_metadata_targets_aggregation_candidate(self):
+        root = Path(__file__).resolve().parent.parent
+        metadata = tomllib.loads((root / "pyproject.toml").read_text())
+        self.assertEqual(metadata["project"]["version"], "0.1.0a7")
+        self.assertIn("0.1.0a7", (root / "CHANGELOG.md").read_text())
+
     def test_tag_must_identify_the_exact_metadata_version(self):
         check_tag("tag", f"v{VERSION}", VERSION)
         for kind, name in (

@@ -14,6 +14,9 @@ class Limits:
     max_group_depth: int = 3
     max_ordering: int = 3
     max_rows: int = 10_000
+    max_aggregate_rows: int = 10_000
+    max_group_by: int = 3
+    max_metrics: int = 10
     max_saved_queries: int = 100
 
 

@@ -18,6 +18,11 @@ from django_qbe2.group_forms import (
     validate_structure,
 )
 from django_qbe2.limits import get_limits
+from django_qbe2.summary_forms import (
+    SummaryMetricForm,
+    SummaryMetricFormSet,
+    SummaryOrderingForm,
+)
 from django_qbe2.validation import validate_definition
 
 OPERATOR_LABELS = {
@@ -135,8 +140,15 @@ class OrderingForm(forms.Form):
 
 class QueryBuilderForm(forms.Form):
     report = forms.ChoiceField(label=_("Report"))
+    mode = forms.ChoiceField(
+        label=_("Report type"),
+        choices=(("rows", _("Rows")), ("summary", _("Summary"))),
+    )
     columns = forms.MultipleChoiceField(
-        label=_("Columns"), widget=forms.CheckboxSelectMultiple
+        label=_("Columns"), widget=forms.CheckboxSelectMultiple, required=False
+    )
+    group_by = forms.MultipleChoiceField(
+        label=_("Group by"), widget=forms.CheckboxSelectMultiple, required=False
     )
     page_size = forms.IntegerField(label=_("Rows per page"), min_value=1)
 
@@ -150,13 +162,18 @@ class QueryBuilderForm(forms.Form):
     ):
         limits = get_limits()
         data = default_group_data(data, limits)
+        if data is not None and "mode" not in data:
+            data = data.copy()
+            data["mode"] = "rows"
         self.groups, group_choices = make_groups(data, limits)
         initial = dict(initial or {})
         selected = data.get("report") if data is not None else initial.get("report")
         selected = selected or next(iter(sorted(catalog)), "")
         fields = catalog[selected].fields if selected in catalog else {}
         initial.setdefault("report", selected)
+        initial.setdefault("mode", "rows")
         initial.setdefault("columns", list(fields)[:2])
+        initial.setdefault("group_by", [])
         initial.setdefault("page_size", limits.page_size)
         super().__init__(data=data, initial=initial)
         self.structure_only = structure_only
@@ -169,6 +186,10 @@ class QueryBuilderForm(forms.Form):
         self.fields["columns"].choices = [
             (path, field.label) for path, field in fields.items()
         ]
+        self.fields["group_by"].choices = [
+            (path, field.label) for path, field in fields.items()
+        ]
+        self.fields["group_by"].widget.attrs["data-maximum"] = limits.max_group_by
         self.fields["page_size"] = forms.IntegerField(
             label=_("Rows per page"), min_value=1, max_value=limits.max_page_size
         )
@@ -193,6 +214,54 @@ class QueryBuilderForm(forms.Form):
             validate_max=True,
             absolute_max=limits.max_ordering,
         )(data=data, prefix="ordering", form_kwargs={"fields": fields})
+        self.metrics = formset_factory(
+            SummaryMetricForm,
+            formset=SummaryMetricFormSet,
+            extra=0,
+            can_delete=True,
+            max_num=limits.max_metrics,
+            validate_max=True,
+            absolute_max=limits.max_metrics,
+        )(
+            data=data,
+            prefix="metrics",
+            initial=(
+                [{"id": "m1", "function": "count", "field": ""}]
+                if data is None
+                else None
+            ),
+            form_kwargs={"fields": fields},
+        )
+        if data is None:
+            group_fields = initial["group_by"]
+        elif hasattr(data, "getlist"):
+            group_fields = data.getlist("group_by")
+        else:
+            raw_group_fields = data.get("group_by", [])
+            group_fields = (
+                list(raw_group_fields)
+                if isinstance(raw_group_fields, (list, tuple))
+                else [raw_group_fields]
+            )
+        metric_ids = [
+            form["id"].value() for form in self.metrics.forms if form["id"].value()
+        ]
+        self.summary_ordering = formset_factory(
+            SummaryOrderingForm,
+            extra=1,
+            can_delete=True,
+            max_num=limits.max_ordering,
+            validate_max=True,
+            absolute_max=limits.max_ordering,
+        )(
+            data=data,
+            prefix="summary_ordering",
+            form_kwargs={
+                "group_fields": group_fields,
+                "metric_ids": metric_ids,
+                "fields": fields,
+            },
+        )
 
     def clean(self):
         cleaned = super().clean()
@@ -202,9 +271,22 @@ class QueryBuilderForm(forms.Form):
             nodes, removed = validate_structure(self.groups.cleaned_data, get_limits())
             self.filters.removed_groups = removed
         filters_valid = self.filters.is_valid()
+        mode = cleaned.get("mode")
         ordering_valid = self.ordering.is_valid()
-        if self.errors or not filters_valid or not ordering_valid or not groups_valid:
-            if not filters_valid or not ordering_valid or not groups_valid:
+        metrics_valid = self.metrics.is_valid()
+        summary_ordering_valid = self.summary_ordering.is_valid()
+        active_controls_valid = (
+            ordering_valid
+            if mode == "rows"
+            else metrics_valid and summary_ordering_valid
+        )
+        if (
+            self.errors
+            or not filters_valid
+            or not active_controls_valid
+            or not groups_valid
+        ):
+            if not filters_valid or not active_controls_valid or not groups_valid:
                 raise ValidationError(_("Correct the conditions or ordering below."))
             return cleaned
         if self.structure_only:
@@ -233,32 +315,70 @@ class QueryBuilderForm(forms.Form):
                     "group": row.get("group") or "root",
                 }
             )
-        ordering = [
-            {"field": row["field"], "direction": row["direction"]}
-            for row in self.ordering.cleaned_data
-            if row and row.get("field") and not row.get("DELETE")
-        ]
-        self.payload = {
-            "version": 1,
-            "report": cleaned["report"],
-            "columns": cleaned["columns"],
-            "filters": [
-                {key: row[key] for key in ("field", "operator", "value")}
-                for row in filters
-            ],
-            "ordering": ordering,
-        }
         try:
             where = build_where(nodes, removed, filters)
-            if (
-                len(nodes.keys() - removed) == 1
-                and where["connector"] == "and"
-                and not where["negated"]
-            ):
-                self.payload["filters"] = where["children"]
+            if mode == "summary":
+                metrics = []
+                for row in self.metrics.cleaned_data:
+                    if not row or row.get("DELETE"):
+                        continue
+                    function = row.get("function")
+                    if not function:
+                        raise ValidationError(_("Choose each calculation."))
+                    field = row.get("field") or None
+                    metrics.append(
+                        {
+                            "id": row["id"],
+                            "function": function,
+                            "field": None if function == "count" else field,
+                        }
+                    )
+                ordering = []
+                for row in self.summary_ordering.cleaned_data:
+                    if not row or row.get("DELETE") or not row.get("target"):
+                        continue
+                    target_type, target = row["target"].split(":", 1)
+                    ordering.append(
+                        {
+                            "type": target_type,
+                            "id" if target_type == "metric" else "field": target,
+                            "direction": row["direction"],
+                        }
+                    )
+                self.payload = {
+                    "version": 3,
+                    "report": cleaned["report"],
+                    "where": where,
+                    "group_by": cleaned["group_by"],
+                    "metrics": metrics,
+                    "ordering": ordering,
+                }
             else:
-                self.payload.pop("filters")
-                self.payload.update(version=2, where=where)
+                if not cleaned["columns"]:
+                    self.add_error("columns", _("Choose at least one column."))
+                    return cleaned
+                ordering = [
+                    {"field": row["field"], "direction": row["direction"]}
+                    for row in self.ordering.cleaned_data
+                    if row and row.get("field") and not row.get("DELETE")
+                ]
+                self.payload = {
+                    "version": 1,
+                    "report": cleaned["report"],
+                    "columns": cleaned["columns"],
+                    "filters": [
+                        {key: row[key] for key in ("field", "operator", "value")}
+                        for row in filters
+                    ],
+                    "ordering": ordering,
+                }
+                if not (
+                    len(nodes.keys() - removed) == 1
+                    and where["connector"] == "and"
+                    and not where["negated"]
+                ):
+                    self.payload.pop("filters")
+                    self.payload.update(version=2, where=where)
             self.definition = validate_definition(self.payload, self.catalog)
         except ValidationError as error:
             for control, messages in (
@@ -279,23 +399,46 @@ def payload_form_data(payload: object, *, page_size: str) -> QueryDict:
     data = QueryDict(mutable=True)
     payload = payload if isinstance(payload, dict) else {}
     data["report"] = str(payload.get("report", ""))
+    data["mode"] = "summary" if payload.get("version") == 3 else "rows"
     columns = payload.get("columns", [])
     data.setlist(
         "columns",
         [str(value) for value in columns] if isinstance(columns, list) else [],
     )
     data["page_size"] = page_size
+    group_by = payload.get("group_by", [])
+    data.setlist(
+        "group_by",
+        [str(value) for value in group_by] if isinstance(group_by, list) else [],
+    )
     limits = get_limits()
-    if payload.get("version") == 2:
+    if payload.get("version") in (2, 3):
         try:
             groups, filters = flatten_where(payload.get("where"), limits)
         except ValidationError:
             groups, filters = [], []
         payload = {**payload, "groups": groups, "filters": filters}
+    if payload.get("version") == 3:
+        summary_ordering = []
+        ordering = payload.get("ordering", [])
+        for row in ordering if isinstance(ordering, list) else []:
+            if not isinstance(row, dict):
+                continue
+            target_type = row.get("type")
+            target = row.get("id" if target_type == "metric" else "field")
+            summary_ordering.append(
+                {
+                    "target": f"{target_type}:{target}",
+                    "direction": row.get("direction", ""),
+                }
+            )
+        payload = {**payload, "ordering": [], "summary_ordering": summary_ordering}
     for prefix, maximum in (
         ("groups", limits.max_groups),
         ("filters", limits.max_filters),
         ("ordering", limits.max_ordering),
+        ("metrics", limits.max_metrics),
+        ("summary_ordering", limits.max_ordering),
     ):
         if prefix == "groups" and "groups" not in payload:
             continue
@@ -319,10 +462,14 @@ def payload_form_data(payload: object, *, page_size: str) -> QueryDict:
                     "connector",
                     "negated",
                     "group",
+                    "function",
+                    "target",
                 ):
                     continue
                 if key == "negated":
                     value = "on" if value is True else ""
+                elif prefix == "metrics" and key == "field" and value is None:
+                    value = ""
                 elif type(value) is bool:
                     value = "true" if value else "false"
                 data[f"{prefix}-{index}-{key}"] = str(value)

@@ -30,6 +30,21 @@ class OrderingSpec:
 
 
 @dataclass(frozen=True)
+class MetricSpec:
+    id: str
+    function: Literal["count", "sum", "avg"]
+    field: str | None
+
+
+@dataclass(frozen=True)
+class SummaryOrderingSpec:
+    type: Literal["group", "metric"]
+    direction: Literal["asc", "desc"]
+    field: str | None = None
+    id: str | None = None
+
+
+@dataclass(frozen=True)
 class QueryDefinition:
     version: Literal[1, 2]
     report: str
@@ -37,3 +52,13 @@ class QueryDefinition:
     filters: tuple[FilterSpec, ...]
     ordering: tuple[OrderingSpec, ...]
     where: ConditionGroup | None = None
+
+
+@dataclass(frozen=True)
+class SummaryDefinition:
+    version: Literal[3]
+    report: str
+    where: ConditionGroup
+    group_by: tuple[str, ...]
+    metrics: tuple[MetricSpec, ...]
+    ordering: tuple[SummaryOrderingSpec, ...]

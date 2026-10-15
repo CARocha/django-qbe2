@@ -1,5 +1,21 @@
 # Changelog
 
+## 0.1.0a7 — release candidate
+
+### Added
+
+- Rows/Summary report modes with bounded ungrouped and grouped Count, Sum and
+  Average calculations over each request's authorized root rows.
+- Strict JSON v3 definitions, numeric-only metric controls, stable metric IDs,
+  deterministic summary ordering and complete-result pagination.
+- Summary CSV and saved-query support using the existing owner, sharing, copy and
+  current-user revalidation rules.
+- Independent source and output caps, exact Python Decimal accumulation, explicit
+  NULL semantics and half-even Average rounding.
+
+No database migration is required for summaries. Existing v1 and v2 definitions
+continue to open and execute unchanged.
+
 ## 0.1.0a6 — release candidate
 
 ### Added

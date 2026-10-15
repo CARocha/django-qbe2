@@ -21,6 +21,10 @@ The package is experimental, so follow release notes before upgrading.
       Nonempty tuple of unique scalar field paths. Local paths or one forward
       FK/OneToOne hop are supported. Default: empty tuple.
 
+      Registered integer and decimal paths are automatically available to Summary
+      reports for Sum and Average. Every permitted path may be used for grouping;
+      no aggregate-specific registration API is required.
+
    .. py:attribute:: field_labels
 
       Optional dictionary mapping declared field paths to display text.
@@ -31,6 +35,8 @@ The package is experimental, so follow release notes before upgrading.
       Required row authorization policy. Return an unsliced, unprojected QuerySet
       of ``model`` on the default database for this authenticated request. No
       implicit owner or tenant policy is supplied. See :doc:`reports`.
+      Rows used by summaries come from this same policy. QBE does not bypass it or
+      delegate authorization to an aggregate database expression.
 
 .. py:function:: register(report_class)
 
