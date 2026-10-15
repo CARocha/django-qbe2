@@ -370,6 +370,7 @@ def results_view(request: HttpRequest):
                 queryset,
                 form.definition,
                 catalog,
+                request=request,
                 page=page_number,
                 page_size=form.cleaned_data["page_size"],
             )

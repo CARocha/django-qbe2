@@ -42,6 +42,17 @@ def related_queryset(
     request: HttpRequest,
 ) -> QuerySet:
     """Return terminal rows scoped through every model on a declared path."""
+    queryset = scoped_related_queryset(field, catalog, request)
+    path_to_root = _path_to_source(field.relations)
+    return queryset.order_by().filter(**{f"{path_to_root}__pk": OuterRef("pk")})
+
+
+def scoped_related_queryset(
+    field: FieldSpec,
+    catalog: dict[str, ReportSpec],
+    request: HttpRequest,
+) -> QuerySet:
+    """Return terminal rows constrained by every intermediate report policy."""
     steps = field.relations
     if not steps:
         raise ImproperlyConfigured("A related queryset needs a relation path.")
@@ -67,8 +78,26 @@ def related_queryset(
             }
         )
 
-    path_to_root = _path_to_source(steps)
-    return queryset.order_by().filter(**{f"{path_to_root}__pk": OuterRef("pk")})
+    return queryset.order_by()
+
+
+def related_value_rows(
+    field: FieldSpec,
+    catalog: dict[str, ReportSpec],
+    request: HttpRequest,
+    root_ids: list[object],
+) -> QuerySet:
+    """Return distinct root/target/value triples in stable target order."""
+    path_to_root = _path_to_source(field.relations)
+    terminal_name = field.path.rsplit("__", 1)[-1]
+    return (
+        scoped_related_queryset(field, catalog, request)
+        .filter(**{f"{path_to_root}__pk__in": root_ids})
+        .values_list(f"{path_to_root}__pk", "pk", terminal_name)
+        .order_by()
+        .distinct()
+        .order_by(f"{path_to_root}__pk", "pk")
+    )
 
 
 def apply_single_relation_scopes(
