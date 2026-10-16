@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+## 0.1.0a15 — release candidate
+
+### Fixed
+
+- Open scheduled-report details before the first run and correctly render the
+  attachment/recipient count with Django's pluralized template syntax.
+
 ## 0.1.0a14 — release candidate
 
 ### Added
