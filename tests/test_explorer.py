@@ -22,6 +22,7 @@ class ExplorerTests(SimpleTestCase):
                 Order,
                 (
                     "number",
+                    "total",
                     "customer__name",
                     "customer__pets__name",
                     "customer__profile__label",
@@ -46,10 +47,18 @@ class ExplorerTests(SimpleTestCase):
             [node.id for node in data.nodes],
             ["tests.order", "tests.customer", "tests.pet", "tests.profile"],
         )
+        self.assertEqual(len(data.edges), 3)
+        self.assertEqual(
+            len(
+                {(edge.source_id, edge.accessor, edge.target_id) for edge in data.edges}
+            ),
+            len(data.edges),
+        )
         self.assertEqual(
             [(field.path, field.owner_id) for field in data.fields],
             [
                 ("number", "tests.order"),
+                ("total", "tests.order"),
                 ("customer__name", "tests.customer"),
                 ("customer__pets__name", "tests.pet"),
                 ("customer__profile__label", "tests.profile"),
@@ -66,6 +75,21 @@ class ExplorerTests(SimpleTestCase):
             (edge.source_id, edge.target_id), ("tests.customer", "tests.order")
         )
         self.assertEqual(len(data.edges), 2)
+        profile_edge = next(edge for edge in data.edges if edge.accessor == "profile")
+        self.assertTrue(profile_edge.reverse)
+        self.assertFalse(profile_edge.multi_valued)
+
+    def test_two_hop_field_has_connected_edges(self):
+        data = build_explorer(self.catalog["tests.order"], self.catalog)
+
+        self.assertEqual(
+            [(edge.source_id, edge.target_id) for edge in data.edges],
+            [
+                ("tests.order", "tests.customer"),
+                ("tests.customer", "tests.pet"),
+                ("tests.customer", "tests.profile"),
+            ],
+        )
 
     def test_direct_and_reverse_many_to_many_edges_are_multi_valued(self):
         direct = build_explorer(self.catalog["tests.pet"], self.catalog)
@@ -96,13 +120,21 @@ class ExplorerTests(SimpleTestCase):
 
         self.assertEqual([node.id for node in data.nodes], ["tests.order"])
         self.assertEqual(data.edges, ())
-        self.assertEqual([field.path for field in data.fields], ["number"])
+        self.assertEqual([field.path for field in data.fields], ["number", "total"])
 
     def test_field_eligibility_excludes_multivalued_ordering_and_summaries(self):
         data = build_explorer(self.catalog["tests.order"], self.catalog)
-        scalar, multivalued = data.fields[1], data.fields[2]
+        scalar, multivalued = data.fields[1], data.fields[3]
 
         self.assertTrue(scalar.orderable)
         self.assertTrue(scalar.groupable)
+        self.assertTrue(scalar.metricable)
         self.assertFalse(multivalued.orderable)
         self.assertFalse(multivalued.groupable)
+        self.assertFalse(multivalued.metricable)
+
+    def test_text_fields_are_not_numeric_summary_metrics(self):
+        data = build_explorer(self.catalog["tests.order"], self.catalog)
+
+        self.assertFalse(data.fields[0].metricable)
+        self.assertTrue(data.fields[1].metricable)

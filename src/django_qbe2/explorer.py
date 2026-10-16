@@ -2,6 +2,8 @@
 
 from dataclasses import dataclass
 
+from django.db import models
+
 from django_qbe2.catalog import ReportSpec
 
 
@@ -32,6 +34,7 @@ class ExplorerField:
     multi_valued: bool
     orderable: bool
     groupable: bool
+    metricable: bool
 
 
 @dataclass(frozen=True)
@@ -87,6 +90,10 @@ def build_explorer(report: ReportSpec, catalog: dict[str, ReportSpec]) -> Explor
                 multi_valued=field.multi_valued,
                 orderable=not field.multi_valued,
                 groupable=not field.multi_valued,
+                metricable=not field.multi_valued
+                and isinstance(
+                    field.django_field, (models.IntegerField, models.DecimalField)
+                ),
             )
         )
 

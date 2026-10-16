@@ -40,6 +40,26 @@
   #id_columns, #id_group_by { grid-template-columns: 1fr; }
 }
 
+.qbe-explorer-models, .qbe-explorer-relations { display: grid; gap: .75rem; }
+.qbe-explorer-models > li { padding: .75rem; border: 1px solid var(--hairline-color); border-radius: 4px; }
+.qbe-explorer-models ul { display: grid; gap: .5rem; margin-top: .5rem; }
+.qbe-explorer-models code { margin-inline-start: .5rem; overflow-wrap: anywhere; }
+.qbe-explorer-enhanced { display: grid; gap: .75rem; margin-block: 1rem; }
+.qbe-explorer-enhanced[hidden], .qbe-explorer-actions[hidden] { display: none; }
+.qbe-explorer-enhanced input[type="search"] { max-width: 32rem; }
+.qbe-explorer-diagram-scroll { overflow-x: auto; max-width: 100%; border: 1px solid var(--hairline-color); border-radius: 4px; }
+.qbe-explorer-diagram-scroll:focus-visible { outline: 2px solid var(--link-fg); outline-offset: 3px; }
+.qbe-explorer-diagram { display: block; min-width: 100%; color: var(--body-fg); }
+.qbe-explorer-edge { fill: none; stroke: var(--body-quiet-color); stroke-width: 2; }
+.qbe-explorer-arrow { fill: var(--body-quiet-color); }
+.qbe-explorer-edge-label { fill: var(--body-quiet-color); font-size: 12px; }
+.qbe-explorer-node rect { fill: var(--darkened-bg); stroke: var(--hairline-color); stroke-width: 1.5; }
+.qbe-explorer-node.is-root rect { stroke: var(--primary); stroke-width: 2; }
+.qbe-explorer-node-label { fill: var(--body-fg); font-size: 14px; font-weight: 700; }
+.qbe-explorer-node-id { fill: var(--body-quiet-color); font-size: 11px; }
+.qbe-explorer-actions { display: inline-flex; flex-wrap: wrap; gap: .35rem; margin-inline-start: .5rem; }
+.qbe-explorer-actions button { min-height: 30px; padding: .2rem .5rem; font-size: .9em; }
+
 .qbe-condition-group { min-width: 0; border: 1px solid var(--hairline-color); border-inline-start: 3px solid var(--primary); padding: 1rem; margin-bottom: 1rem; border-radius: 4px; }
 .qbe-condition-group legend { padding: 0 .5rem; font-weight: bold; }
 .qbe-group-controls { display: flex; flex-wrap: wrap; align-items: end; gap: 1rem; margin-bottom: 1rem; }

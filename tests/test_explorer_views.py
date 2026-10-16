@@ -61,3 +61,22 @@ class ExplorerViewTests(TestCase):
         self.assertContains(response, "number")
         self.assertNotContains(response, "customer__name")
         self.assertEqual(len(response.context["explorer_data"].edges), 0)
+
+    def test_text_hierarchy_and_existing_builder_controls_are_server_rendered(self):
+        response = self.client.get("/qbe/", {"report": "tests.order"})
+
+        self.assertContains(response, 'name="columns"')
+        self.assertContains(response, "Preview report")
+        self.assertContains(response, "customer__name")
+
+    def test_field_labels_are_escaped_in_the_hierarchy_and_json_data(self):
+        report = self.catalog["tests.order"].report
+        original = report.field_labels
+        report.field_labels = {"number": "<svg onload=alert(1)>"}
+        try:
+            response = self.client.get("/qbe/", {"report": "tests.order"})
+        finally:
+            report.field_labels = original
+
+        self.assertContains(response, "&lt;svg onload=alert(1)&gt;")
+        self.assertNotContains(response, "<svg onload=alert(1)>")

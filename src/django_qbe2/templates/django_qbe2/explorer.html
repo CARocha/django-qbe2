@@ -2,6 +2,14 @@
 <section class="module qbe-section qbe-explorer" aria-labelledby="qbe-explorer-title">
   <h2 id="qbe-explorer-title">{% translate "Registered fields and relationships" %}</h2>
   <p>{% translate "This report uses only fields registered for models you are authorized to view." %}</p>
+  <div class="qbe-explorer-enhanced" hidden>
+    <label for="qbe-explorer-search">{% translate "Search registered fields" %}</label>
+    <input id="qbe-explorer-search" type="search" autocomplete="off">
+    <div class="qbe-explorer-diagram-scroll" tabindex="0" aria-label="{% translate 'Relationship diagram; scroll horizontally to explore' %}">
+      <svg class="qbe-explorer-diagram" role="img" aria-label="{% translate 'Registered model relationships' %}"></svg>
+    </div>
+    <p id="qbe-explorer-feedback" class="visually-hidden" role="status" aria-live="polite"></p>
+  </div>
   <h3>{% translate "Relationship paths" %}</h3>
   {% if explorer_data.edges %}
   <ul class="qbe-explorer-relations">
@@ -24,8 +32,13 @@
       <ul>
         {% for field in explorer_data.fields %}
         {% if field.owner_id == node.id %}
-        <li><span>{{ field.label }}</span> <code>{{ field.path }}</code>
+        <li data-explorer-field data-field-path="{{ field.path }}"><span>{{ field.label }}</span> <code>{{ field.path }}</code>
           {% if field.multi_valued %}<span class="help">{% translate "Multiple values; available for columns and filters only." %}</span>{% endif %}
+          <span class="qbe-explorer-actions" hidden>
+            <button type="button" data-explorer-action="column" data-field-path="{{ field.path }}">{% translate "Add column" %}</button>
+            {% if field.groupable %}<button type="button" data-explorer-action="group" data-field-path="{{ field.path }}">{% translate "Add summary group" %}</button>{% endif %}
+            <button type="button" data-explorer-action="filter" data-field-path="{{ field.path }}">{% translate "Add filter" %}</button>
+          </span>
         </li>
         {% endif %}
         {% endfor %}
