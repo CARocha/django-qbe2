@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from decimal import Decimal, localcontext
 
 from django.utils.translation import gettext as _
+from django.utils.translation import ngettext
 
 from django_qbe2.aggregation import SummaryResult
 from django_qbe2.definitions import SummaryDefinition
@@ -144,7 +145,11 @@ def build_bar_chart(
     return BarChart(
         title=str(_("Summary bar chart")),
         description=str(
-            _("%(metric)s by %(group)s for %(count)s categories on the current page.")
+            ngettext(
+                "%(metric)s by %(group)s for %(count)s category on the current page.",
+                "%(metric)s by %(group)s for %(count)s categories on the current page.",
+                len(bars),
+            )
             % {
                 "metric": metric_column.label,
                 "group": group_column.label,

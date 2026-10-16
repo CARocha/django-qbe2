@@ -69,6 +69,7 @@ class SummaryBarChartTests(SimpleTestCase):
 
         self.assertEqual(default.metric_id, "m1")
         self.assertEqual(default.bars[0].value, 3)
+        self.assertIn("1 category on the current page", default.description)
         self.assertEqual(selected.metric_id, "m3")
         self.assertEqual(selected.bars[0].value, Decimal("4.166667"))
 
