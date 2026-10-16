@@ -248,6 +248,10 @@ Choose **Summary** under Report type and apply it. Select zero to three grouping
 fields and one to ten calculations. **Count records** needs no field; **Sum** and
 **Average** offer only registered integer and decimal fields. Add calculation
 works with or without JavaScript and assigns stable ``m1``, ``m2`` identifiers.
+The checkboxes in this section choose grouping fields; they are separate from the
+columns selected for a row report. For example, to chart subscriptions by plan,
+select only ``plan`` as the grouping field and use **Count records**. You can group
+by two or three fields for a summary table, but a bar chart requires exactly one.
 Switching report type preserves the report and conditions while resetting output
 columns, calculations and ordering. It does not update a saved query until you
 explicitly save or update it.
