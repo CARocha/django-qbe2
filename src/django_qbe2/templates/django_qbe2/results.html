@@ -21,10 +21,16 @@
       <tbody>{% for row in table_rows %}<tr>{% for cell in row %}<td>{{ cell|default_if_none:"—" }}</td>{% endfor %}</tr>{% empty %}<tr><td colspan="{{ page.labels|length }}">{% if is_summary %}{% translate "No groups match your conditions." %}{% else %}{% translate "No rows match your conditions." %}{% endif %}</td></tr>{% endfor %}</tbody>
     </table>
   </div>
+  {% if bar_chart %}{% include "django_qbe2/bar_chart.html" %}
+  {% elif is_summary %}
+    {% if not chart_is_supported %}<p class="help">{% translate "Bar charts require one grouping field and at least one result." %}</p>
+    {% elif not page.rows %}<p class="help">{% translate "No chart is available because the current page has no groups." %}</p>{% endif %}
+  {% endif %}
   <form method="post" action="{% url 'django_qbe2:results' %}" class="qbe-pagination">
     {% csrf_token %}
     <input type="hidden" name="definition" value="{{ definition_json }}">
     <input type="hidden" name="page_size" value="{{ page.page_size }}">
+    {% if bar_chart %}<input type="hidden" name="chart_metric" value="{{ bar_chart.metric_id }}">{% endif %}
     {% if saved_query %}<input type="hidden" name="saved_query" value="{{ saved_query.pk }}">{% endif %}
     {% if page.page > 1 %}<button type="submit" name="page" value="{{ previous_page }}">{% translate "Previous page" %}</button>{% endif %}
     <span>{% blocktranslate with current=page.page total=page.num_pages %}Page {{ current }} of {{ total }}{% endblocktranslate %}</span>

@@ -1,0 +1,38 @@
+{% load i18n %}
+<section class="module qbe-section qbe-chart-section" aria-labelledby="qbe-chart-heading">
+  <h2 id="qbe-chart-heading">{{ bar_chart.title }}</h2>
+  <p>{{ bar_chart.description }}</p>
+  {% if chart_metrics|length > 1 %}
+  <form method="post" action="{% url 'django_qbe2:results' %}" class="qbe-chart-selector">
+    {% csrf_token %}
+    <input type="hidden" name="definition" value="{{ definition_json }}">
+    <input type="hidden" name="page_size" value="{{ page.page_size }}">
+    {% if saved_query %}<input type="hidden" name="saved_query" value="{{ saved_query.pk }}">{% endif %}
+    <label for="qbe-chart-metric">{% translate "Calculation to chart" %}</label>
+    <select id="qbe-chart-metric" name="chart_metric">
+      {% for metric in chart_metrics %}
+      <option value="{{ metric.id }}"{% if metric.id == chart_metric %} selected{% endif %}>{{ metric.label }}</option>
+      {% endfor %}
+    </select>
+    <button type="submit">{% translate "Update chart" %}</button>
+  </form>
+  {% endif %}
+  <div class="qbe-chart-scroll" tabindex="0" role="region" aria-label="{% translate 'Summary bar chart for the current page' %}">
+    <svg class="qbe-bar-chart" viewBox="0 0 {{ bar_chart.width }} {{ bar_chart.height }}" role="img" aria-labelledby="qbe-chart-svg-title qbe-chart-svg-description">
+      <title id="qbe-chart-svg-title">{{ bar_chart.title }}: {{ bar_chart.metric_label }}</title>
+      <desc id="qbe-chart-svg-description">{{ bar_chart.description }} {% translate "The adjacent table provides exact values." %}</desc>
+      <text class="qbe-chart-axis-title" x="12" y="22">{{ bar_chart.group_label }}</text>
+      <text class="qbe-chart-axis-title" x="300" y="{{ bar_chart.height|add:'-2' }}" text-anchor="middle">{{ bar_chart.metric_label }}</text>
+      <line class="qbe-chart-zero-axis" x1="{{ bar_chart.baseline }}" y1="30" x2="{{ bar_chart.baseline }}" y2="{{ bar_chart.height|add:'-30' }}" />
+      {% for tick in bar_chart.ticks %}
+      <line class="qbe-chart-tick" x1="{{ tick.x }}" y1="{{ bar_chart.height|add:'-32' }}" x2="{{ tick.x }}" y2="{{ bar_chart.height|add:'-27' }}" />
+      <text class="qbe-chart-tick-label" x="{{ tick.x }}" y="{{ bar_chart.height|add:'-8' }}" text-anchor="middle">{{ tick.label }}</text>
+      {% endfor %}
+      {% for bar in bar_chart.bars %}
+      <text class="qbe-chart-category" x="90" y="{{ bar.y|add:'17' }}" text-anchor="end">{{ bar.label|truncatechars:28 }}<title>{{ bar.label }}</title></text>
+      <rect class="qbe-chart-bar" x="{{ bar.x }}" y="{{ bar.y }}" width="{{ bar.width }}" height="24" rx="3"><title>{{ bar.label }}: {{ bar.value }}</title></rect>
+      {% endfor %}
+    </svg>
+  </div>
+  <p class="help">{% translate "The chart shows the groups on this page only. The table and exports retain exact values and complete results." %}</p>
+</section>

@@ -72,3 +72,10 @@
   .qbe-group-controls { flex-direction: column; align-items: stretch; }
   .qbe-group-controls select { width: 100%; }
 }
+
+.qbe-chart-scroll { overflow-x: auto; max-width: 100%; }
+.qbe-bar-chart { display: block; height: auto; min-width: 560px; width: 100%; }
+.qbe-chart-zero-axis, .qbe-chart-tick { stroke: var(--border-color); stroke-width: 1; }
+.qbe-chart-tick-label, .qbe-chart-category, .qbe-chart-axis-title { fill: var(--body-fg); font-size: 13px; }
+.qbe-chart-bar { fill: var(--primary); }
+.qbe-chart-selector { display: flex; align-items: center; flex-wrap: wrap; gap: .75rem; margin: 1rem 0; }

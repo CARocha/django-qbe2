@@ -15,6 +15,7 @@ from django.views.decorators.http import require_GET, require_POST
 from django_qbe2.access import require_qbe_access
 from django_qbe2.aggregation import paginate_summary
 from django_qbe2.catalog import get_catalog
+from django_qbe2.charting import build_bar_chart
 from django_qbe2.choices import choice_value
 from django_qbe2.definitions import SummaryDefinition
 from django_qbe2.engine import build_queryset, build_summary_source
@@ -427,6 +428,23 @@ def results_view(request: HttpRequest):
             )
             for row in page.rows
         ]
+        bar_chart = build_bar_chart(
+            form.definition,
+            summary_result,
+            page,
+            request.POST.get("chart_metric"),
+        )
+        chart_metrics = [
+            {
+                "id": metric.id,
+                "label": next(
+                    column.label
+                    for column in output_columns
+                    if column.key == f"metric:{metric.id}"
+                ),
+            }
+            for metric in form.definition.metrics
+        ]
     else:
         choice_labels = {
             path: {
@@ -442,6 +460,8 @@ def results_view(request: HttpRequest):
             )
             for row in page.rows
         ]
+        bar_chart = None
+        chart_metrics = []
     context = {
         **admin.site.each_context(request),
         "title": _("Report results"),
@@ -455,6 +475,10 @@ def results_view(request: HttpRequest):
         "page": page,
         "is_summary": is_summary,
         "is_grouped": is_summary and bool(form.definition.group_by),
+        "chart_is_supported": is_summary and len(form.definition.group_by) == 1,
+        "bar_chart": bar_chart,
+        "chart_metrics": chart_metrics,
+        "chart_metric": bar_chart.metric_id if bar_chart else "",
         "source_count": summary_result.source_count if is_summary else None,
         "group_count": len(summary_result.rows) if is_summary else None,
         "definition_json": json.dumps(form.payload),

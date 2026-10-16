@@ -20,6 +20,12 @@ class Bar:
 
 
 @dataclass(frozen=True)
+class AxisTick:
+    x: Decimal
+    label: str
+
+
+@dataclass(frozen=True)
 class BarChart:
     title: str
     description: str
@@ -29,6 +35,7 @@ class BarChart:
     width: int
     height: int
     baseline: Decimal
+    ticks: tuple[AxisTick, ...]
     bars: tuple[Bar, ...]
 
 
@@ -37,6 +44,13 @@ def _choice_label(value, choices):
         if type(value) is type(choice_value) and value == choice_value:
             return str(label)
     return str(value) if value is not None else "—"
+
+
+def _axis_label(value: Decimal) -> str:
+    label = format(value, "f")
+    if "." in label:
+        label = label.rstrip("0").rstrip(".")
+    return label or "0"
 
 
 def build_bar_chart(
@@ -77,17 +91,17 @@ def build_bar_chart(
 
     decimals = [Decimal(value) for value in values]
     maximum = max((abs(value) for value in decimals), default=Decimal(0))
-    width = 720
-    plot_left = Decimal(180)
-    plot_width = Decimal(520)
+    width = 560
+    plot_left = Decimal(100)
+    plot_width = Decimal(400)
     has_negative = any(value < 0 for value in decimals)
     has_positive = any(value > 0 for value in decimals)
     if has_negative and has_positive:
         baseline = plot_left + plot_width / 2
         maximum_width = plot_width / 2
     elif has_negative:
-        baseline = plot_left + plot_width
-        maximum_width = plot_width
+        baseline = plot_left + plot_width / 2
+        maximum_width = plot_width / 2
     else:
         baseline = plot_left
         maximum_width = plot_width
@@ -96,6 +110,24 @@ def build_bar_chart(
     bars = []
     with localcontext() as context:
         context.prec = precision
+        if maximum == 0:
+            ticks = (AxisTick(plot_left, "0"),)
+        elif has_negative and has_positive:
+            ticks = (
+                AxisTick(plot_left, _axis_label(-maximum)),
+                AxisTick(baseline, "0"),
+                AxisTick(plot_left + plot_width, _axis_label(maximum)),
+            )
+        elif has_negative:
+            ticks = (
+                AxisTick(plot_left, _axis_label(-maximum)),
+                AxisTick(baseline, "0"),
+            )
+        else:
+            ticks = (
+                AxisTick(plot_left, "0"),
+                AxisTick(plot_left + plot_width, _axis_label(maximum)),
+            )
         for index, (row, value) in enumerate(zip(page.rows, decimals, strict=True)):
             bar_width = maximum_width * abs(value) / maximum if maximum else Decimal(0)
             label = _choice_label(row.get(group_key), group_column.choices)
@@ -125,5 +157,6 @@ def build_bar_chart(
         width=width,
         height=80 + len(bars) * 44,
         baseline=baseline,
+        ticks=ticks,
         bars=tuple(bars),
     )

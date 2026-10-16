@@ -4,7 +4,7 @@ from decimal import Decimal
 from django.test import SimpleTestCase
 
 from django_qbe2.aggregation import SummaryResult
-from django_qbe2.definitions import MetricSpec, SummaryDefinition
+from django_qbe2.definitions import ConditionGroup, MetricSpec, SummaryDefinition
 from django_qbe2.execution import ResultPage
 from django_qbe2.output import OutputColumn
 
@@ -19,7 +19,7 @@ class SummaryBarChartTests(SimpleTestCase):
         definition = SummaryDefinition(
             version=3,
             report="tests.order",
-            where=None,
+            where=ConditionGroup("and", False, ()),
             group_by=group_by,
             metrics=metrics,
             ordering=(),
@@ -115,7 +115,7 @@ class SummaryBarChartTests(SimpleTestCase):
             ]
         )
 
-        self.assertEqual(chart.baseline, Decimal("440"))
+        self.assertEqual(chart.baseline, Decimal("300"))
         self.assertEqual(chart.bars[0].width, Decimal(0))
         self.assertLess(chart.bars[1].x, chart.baseline)
         self.assertEqual(chart.bars[2].x, chart.baseline)
@@ -124,12 +124,31 @@ class SummaryBarChartTests(SimpleTestCase):
             self.assertGreaterEqual(bar.x, 40)
             self.assertLessEqual(bar.x + bar.width, chart.width - 20)
 
+    def test_negative_only_chart_keeps_zero_axis_in_the_plot_middle(self):
+        chart = self.build([("negative", {"metric:m1": Decimal("-10.25")})])
+
+        self.assertEqual(chart.baseline, Decimal("300"))
+        self.assertEqual(chart.bars[0].x, Decimal("100"))
+        self.assertEqual(chart.bars[0].width, Decimal("200"))
+        self.assertEqual([tick.label for tick in chart.ticks], ["-10.25", "0"])
+
     def test_high_precision_decimal_values_remain_exact(self):
         exact = Decimal("123456789012345678901234567890.12345678901234567890")
         chart = self.build([("precise", {"metric:m1": exact})])
 
         self.assertEqual(chart.bars[0].value, exact)
         self.assertIsInstance(chart.bars[0].width, Decimal)
+
+    def test_zero_only_values_produce_zero_width_bars_without_division(self):
+        chart = self.build(
+            [
+                ("empty", {"metric:m1": 0}),
+                ("also empty", {"metric:m1": Decimal("0.00")}),
+            ]
+        )
+
+        self.assertEqual([bar.width for bar in chart.bars], [Decimal(0), Decimal(0)])
+        self.assertEqual(chart.ticks[0].label, "0")
 
     def test_chart_and_bars_are_immutable(self):
         chart = self.build([("active", {"metric:m1": 3})])
