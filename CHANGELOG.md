@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.1.0a12 — release candidate
+
+### Changed
+
+- Simplified the visual report explorer with collapsible model sections and one
+  compact action menu per field for adding columns, filters and summary groups.
+- Improved field search so matching models open automatically and unrelated models
+  are hidden.
+
 ## 0.1.0a11 — release candidate
 
 ### Added
