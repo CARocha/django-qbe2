@@ -58,6 +58,17 @@ class ResultsTests(TestCase):
         self.assertEqual(response.status_code, 400)
         self.assertContains(response, "permitted column", status_code=400)
 
+    def test_missing_report_returns_builder_validation_error(self):
+        self.client.force_login(self.alice)
+
+        response = self.client.post(reverse("django_qbe2:results"), {})
+
+        self.assertEqual(response.status_code, 400)
+        self.assertContains(response, "This field is required.", status_code=400)
+        self.assertContains(
+            response, "Choose a report before previewing.", status_code=400
+        )
+
     def test_invisible_report_is_404(self):
         self.assertEqual(self.post(order_payload(report="auth.user")).status_code, 404)
 

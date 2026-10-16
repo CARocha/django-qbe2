@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+## 0.1.0a16 — release candidate
+
+### Fixed
+
+- Disable report preview until a report is selected and return a clear validation
+  error for direct requests without a report.
+- Give the scheduled-report form a responsive, spaced layout with clearly grouped
+  fields and full-width recipient entry.
+
 ## 0.1.0a15 — release candidate
 
 ### Fixed

@@ -19,6 +19,20 @@
 .qbe-workspace .errorlist { margin: .5rem 0; padding: .75rem; }
 .qbe-workspace .submit-row { text-align: start; }
 .qbe-workspace .submit-row input { min-height: 40px; }
+.qbe-workspace #qbe-preview-report:disabled { cursor: not-allowed; opacity: .55; }
+.qbe-preview-help { margin-block: .75rem 1.5rem; }
+.qbe-schedule-form { max-width: 58rem; }
+.qbe-schedule-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.25rem 1.5rem; }
+.qbe-schedule-field { display: grid; min-width: 0; align-content: start; gap: .5rem; }
+.qbe-schedule-field label { font-weight: 600; }
+.qbe-schedule-field input:not([type=checkbox]), .qbe-schedule-field select, .qbe-schedule-field textarea { box-sizing: border-box; width: 100%; max-width: 100%; min-height: 40px; }
+.qbe-schedule-field textarea { min-height: 7rem; resize: vertical; }
+.qbe-schedule-field .helptext { color: var(--body-quiet-color); }
+.qbe-schedule-field--wide, .qbe-schedule-field--full { grid-column: 1 / -1; }
+.qbe-schedule-field--wide input { max-width: 36rem; }
+.qbe-schedule-field--confirmation { display: flex; align-items: center; flex-wrap: wrap; gap: .75rem; }
+.qbe-schedule-field--confirmation label { font-weight: 400; }
+.qbe-schedule-field--confirmation input { margin: 0; }
 .qbe-table-scroll { overflow-x: auto; border: 1px solid var(--hairline-color); border-radius: 4px; }
 .qbe-table-scroll table { width: 100%; }
 .qbe-table-scroll th, .qbe-table-scroll td { padding: .75rem 1rem; white-space: nowrap; }
@@ -38,6 +52,8 @@
   .qbe-section { padding: .75rem; }
   .qbe-section h2 { margin: -.75rem -.75rem .75rem; }
   #id_columns, #id_group_by { grid-template-columns: 1fr; }
+  .qbe-schedule-grid { grid-template-columns: 1fr; gap: 1rem; }
+  .qbe-schedule-field--wide, .qbe-schedule-field--full { grid-column: auto; }
 }
 
 .qbe-explorer-models, .qbe-explorer-relations { display: grid; gap: .5rem; }
