@@ -34,8 +34,12 @@ def query_timeout(*, using: str = "default"):
             "SELECT set_config('statement_timeout', %s, true)",
             [str(STATEMENT_TIMEOUT_MS)],
         )
-        yield
-        cursor.execute("SELECT set_config('statement_timeout', %s, true)", [previous])
+        try:
+            yield
+        finally:
+            cursor.execute(
+                "SELECT set_config('statement_timeout', %s, true)", [previous]
+            )
 
 
 @dataclass(frozen=True)

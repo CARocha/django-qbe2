@@ -35,6 +35,7 @@ class ReportAttachment:
 
 def _read_bounded_response(response, maximum: int) -> bytes:
     content = bytearray()
+    oversized = False
     try:
         if isinstance(response, StreamingHttpResponse):
             chunks = response.streaming_content
@@ -46,16 +47,20 @@ def _read_bounded_response(response, maximum: int) -> bytes:
             if isinstance(chunk, str):
                 chunk = chunk.encode(response.charset or "utf-8")
             if len(content) + len(chunk) > maximum:
-                raise ValidationError(
-                    {
-                        "attachment": _(
-                            "The report attachment exceeds the configured size limit."
-                        )
-                    }
-                )
-            content.extend(chunk)
+                oversized = True
+            elif not oversized:
+                content.extend(chunk)
+        if oversized:
+            raise ValidationError(
+                {
+                    "attachment": _(
+                        "The report attachment exceeds the configured size limit."
+                    )
+                }
+            )
     finally:
-        response.close()
+        if isinstance(response, FileResponse):
+            response.close()
     return bytes(content)
 
 
