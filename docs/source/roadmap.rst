@@ -26,12 +26,14 @@ Completed increments
   output (see :doc:`relationship-design`).
 - Optional typed Excel exports for authorized row and summary reports; CSV remains
   the default dependency-free format.
+- Authorized visual field and relationship explorer with builder shortcuts,
+  a server-rendered fallback and no automatic model discovery.
 
 Next scoped increments
 ----------------------
 
-#. **Visual exploration:** a diagram derived only from the authorized catalog,
-   useful alongside the form rather than necessary to execute a report.
+#. **Summary bar charts:** a one-dimensional bar chart for one selected summary
+   metric, alongside the existing tabular results and without extra data reads.
 
 Each increment gets a scoped design, its own feature branch, regression tests,
 public documentation and a compatibility check before integration. This order

@@ -78,6 +78,33 @@ is inferred from database rows or cached across requests. Callable choices are
 application code: keep them inexpensive and suitable for every user who may
 see that field. QBE's configuration checks do not evaluate these callables.
 
+Visual relationship explorer
+-----------------------------
+
+After choosing a report, the builder displays its registered fields grouped by
+their model and a diagram of relationship paths. Each field includes its full
+registered path, so repeated display labels remain distinguishable. The diagram
+identifies forward or reverse relationships and whether they can return one or
+multiple related values. Search filters only fields in the current authorized
+catalog.
+
+Use **Add column**, **Add filter** or, for eligible fields in Summary mode,
+**Add summary group** to populate the existing builder controls. These shortcuts
+do not execute a query or authorize a field: preview still uses the same
+server-side validation, registered paths, view permissions and
+``Report.get_queryset(request)`` row policies. Every related report must remain
+authorized for the current user.
+
+Multi-valued paths, including reverse foreign keys and ManyToMany relations, can
+be selected as columns or filters. They cannot be used for row ordering,
+summary grouping or numeric Sum/Average metrics. Result rows keep one root row;
+related values are combined within that row subject to the configured limit.
+
+The field hierarchy and ordinary builder controls are rendered by Django, so
+report construction remains available without JavaScript. With JavaScript, the
+diagram, authorized-field search and shortcuts are added. The explorer never
+samples business rows or discovers unregistered model paths automatically.
+
 Pagination and ordering
 -----------------------
 
