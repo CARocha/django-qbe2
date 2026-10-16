@@ -91,7 +91,7 @@ def build_bar_chart(
         return None
 
     decimals = [Decimal(value) for value in values]
-    maximum = max((abs(value) for value in decimals), default=Decimal(0))
+    maximum = max((value.copy_abs() for value in decimals), default=Decimal(0))
     width = 560
     plot_left = Decimal(100)
     plot_width = Decimal(400)

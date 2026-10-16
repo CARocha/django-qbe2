@@ -139,6 +139,7 @@ class SummaryBarChartTests(SimpleTestCase):
 
         self.assertEqual(chart.bars[0].value, exact)
         self.assertIsInstance(chart.bars[0].width, Decimal)
+        self.assertEqual(chart.bars[0].width, Decimal("400"))
 
     def test_zero_only_values_produce_zero_width_bars_without_division(self):
         chart = self.build(
