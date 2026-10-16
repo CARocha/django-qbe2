@@ -19,6 +19,8 @@ class Limits:
     max_group_by: int = 3
     max_metrics: int = 10
     max_saved_queries: int = 100
+    max_scheduled_recipients: int = 10
+    max_scheduled_attachment_bytes: int = 10 * 1024 * 1024
 
 
 def get_limits() -> Limits:
