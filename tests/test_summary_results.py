@@ -150,7 +150,14 @@ class SummaryResultsViewTests(TestCase):
         response = self.post(payload)
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "2 groups")
-        self.assertContains(response, "Same label", count=2)
+        self.assertEqual(
+            [row[0] for row in response.context["table_rows"]],
+            ["Same label", "Same label"],
+        )
+        self.assertEqual(
+            [bar.label for bar in response.context["bar_chart"].bars],
+            ["Same label", "Same label"],
+        )
         self.assertEqual(
             response.context["page"].rows,
             [
