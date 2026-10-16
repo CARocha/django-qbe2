@@ -1,0 +1,29 @@
+{% extends "django_qbe2/scheduled_base.html" %}
+{% load i18n %}
+{% block content %}
+<div class="qbe-workspace">
+  <h1>{{ schedule.name }}</h1>
+  <section class="module qbe-section">
+    <p>{% if schedule.enabled %}{% translate "Enabled" %}{% else %}{% translate "Paused" %}{% endif %}</p>
+    <p>{% blocktranslate with frequency=schedule.frequency time=schedule.local_time timezone=schedule.timezone %}{{ frequency|capfirst }} at {{ time }} ({{ timezone }}){% endblocktranslate %}</p>
+    {% if schedule.weekday_label %}<p>{% blocktranslate with weekday=schedule.weekday_label %}Every {{ weekday }}{% endblocktranslate %}</p>{% endif %}
+    <p>{% blocktranslate with next=schedule.next_run_local %}Next run: {{ next }}{% endblocktranslate %}</p>
+    <p>{% blocktranslate with format=schedule.get_format_display count=recipient_count %}{{ format }} attachment · {{ count }} recipient{% plural %}{{ format }} attachment · {{ count }} recipients{% endblocktranslate %}</p>
+    <p>{% translate "Recipients are hidden from one another in each email." %}</p>
+    <div class="qbe-saved-actions">
+      <a href="{% url 'django_qbe2:scheduled_edit' schedule.pk %}">{% translate "Edit schedule" %}</a>
+      <a href="{% url 'django_qbe2:scheduled_definition' schedule.pk %}">{% translate "Edit report definition" %}</a>
+      <a href="{% url 'django_qbe2:scheduled_delete' schedule.pk %}">{% translate "Delete" %}</a>
+      {% if schedule.enabled %}<form method="post" action="{% url 'django_qbe2:scheduled_pause' schedule.pk %}">{% csrf_token %}<button type="submit">{% translate "Pause" %}</button></form>{% else %}<form method="post" action="{% url 'django_qbe2:scheduled_resume' schedule.pk %}">{% csrf_token %}<button type="submit">{% translate "Resume" %}</button></form>{% endif %}
+    </div>
+  </section>
+  <section class="module qbe-section">
+    <h2>{% translate "Recent runs" %}</h2>
+    {% for run in runs %}<article>
+      <h3>{{ run.get_status_display }} · {{ run.scheduled_for_local }}</h3>
+      <p>{% blocktranslate with attempts=run.attempts %}Attempts: {{ attempts }}{% endblocktranslate %}</p>
+      {% if run.error_summary %}<p role="status">{{ run.error_summary }}</p>{% endif %}
+    </article>{% empty %}<p>{% translate "No runs yet." %}</p>{% endfor %}
+  </section>
+</div>
+{% endblock %}

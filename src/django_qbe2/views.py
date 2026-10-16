@@ -158,7 +158,7 @@ def query_form(request, catalog, data=None):
     return form
 
 
-def builder_action(request, catalog, saved_query):
+def builder_action(request, catalog, saved_query, scheduled_report=None):
     data = default_group_data(request.POST, get_limits()).copy()
     form = QueryBuilderForm(data, catalog=catalog, structure_only=True)
     status = 200
@@ -224,7 +224,11 @@ def builder_action(request, catalog, saved_query):
     return render(
         request,
         "django_qbe2/builder.html",
-        {**builder_context(request, catalog, form), "saved_query": saved_query},
+        {
+            **builder_context(request, catalog, form),
+            "saved_query": saved_query,
+            "scheduled_report": scheduled_report,
+        },
         status=status,
     )
 
@@ -246,7 +250,7 @@ def _replace_formset(data, prefix, rows, maximum):
             data[f"{prefix}-{index}-{key}"] = value
 
 
-def summary_builder_action(request, catalog, saved_query):
+def summary_builder_action(request, catalog, saved_query, scheduled_report=None):
     limits = get_limits()
     data = default_group_data(request.POST, limits).copy()
     action = request.POST.get("action")
@@ -340,7 +344,11 @@ def summary_builder_action(request, catalog, saved_query):
     return render(
         request,
         "django_qbe2/builder.html",
-        {**builder_context(request, catalog, form), "saved_query": saved_query},
+        {
+            **builder_context(request, catalog, form),
+            "saved_query": saved_query,
+            "scheduled_report": scheduled_report,
+        },
         status=status,
     )
 
@@ -351,6 +359,11 @@ def summary_builder_action(request, catalog, saved_query):
 def results_view(request: HttpRequest):
     catalog = get_catalog(request)
     saved_query = None
+    scheduled_report = None
+    if request.POST.get("scheduled_report"):
+        from django_qbe2.scheduled_views import get_owned_schedule
+
+        scheduled_report = get_owned_schedule(request, request.POST["scheduled_report"])
     if request.POST.get("saved_query"):
         saved_query = get_saved_query(request, request.POST["saved_query"])
         if (
@@ -362,20 +375,24 @@ def results_view(request: HttpRequest):
         "add_condition",
         "add_group",
     ):
-        return builder_action(request, catalog, saved_query)
+        return builder_action(request, catalog, saved_query, scheduled_report)
     if request.POST.get("action") in (
         "apply_mode",
         "add_metric",
         "add_summary_ordering",
     ):
-        return summary_builder_action(request, catalog, saved_query)
+        return summary_builder_action(request, catalog, saved_query, scheduled_report)
     form = query_form(request, catalog)
     if not form.is_valid() or request.POST.get("action") == "edit":
         status = 200 if form.is_valid() else 400
         return render(
             request,
             "django_qbe2/builder.html",
-            {**builder_context(request, catalog, form), "saved_query": saved_query},
+            {
+                **builder_context(request, catalog, form),
+                "saved_query": saved_query,
+                "scheduled_report": scheduled_report,
+            },
             status=status,
         )
     try:
@@ -411,7 +428,11 @@ def results_view(request: HttpRequest):
         return render(
             request,
             "django_qbe2/builder.html",
-            {**builder_context(request, catalog, form), "saved_query": saved_query},
+            {
+                **builder_context(request, catalog, form),
+                "saved_query": saved_query,
+                "scheduled_report": scheduled_report,
+            },
             status=400,
         )
     is_summary = isinstance(form.definition, SummaryDefinition)
@@ -467,6 +488,7 @@ def results_view(request: HttpRequest):
         "title": _("Report results"),
         "site_header": _("Django QBE 2"),
         "saved_query": saved_query,
+        "scheduled_report": scheduled_report,
         "owns_saved_query": saved_query is not None
         and saved_query.owner_id == request.user.pk,
         "save_form": SavedQueryNameForm(

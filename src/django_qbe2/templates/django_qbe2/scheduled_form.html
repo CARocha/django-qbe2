@@ -1,0 +1,16 @@
+{% extends "django_qbe2/scheduled_base.html" %}
+{% load i18n %}
+{% block content %}
+<div class="qbe-workspace">
+  <h1>{{ title }}</h1>
+  <p>{% translate "This schedule stores its own copy of the report definition. Each run checks your current report permissions and row access policy." %}</p>
+  <form method="post" action="{% if schedule %}{% url 'django_qbe2:scheduled_edit' schedule.pk %}{% else %}{% url 'django_qbe2:scheduled_create' %}{% endif %}" class="module qbe-section">
+    {% csrf_token %}
+    <input type="hidden" name="schedule_config" value="1">
+    <input type="hidden" name="definition" value="{{ definition_json }}">
+    <input type="hidden" name="page_size" value="{{ page_size }}">
+    {{ schedule_form.as_div }}
+    <div class="submit-row"><button type="submit" class="default">{% if schedule %}{% translate "Save schedule" %}{% else %}{% translate "Create schedule" %}{% endif %}</button></div>
+  </form>
+</div>
+{% endblock %}

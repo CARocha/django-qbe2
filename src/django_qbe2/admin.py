@@ -4,7 +4,7 @@ from django.contrib import admin
 from django.shortcuts import redirect
 from django.urls import path
 
-from django_qbe2.models import SavedQuery
+from django_qbe2.models import SavedQuery, ScheduledReport
 
 
 @admin.register(SavedQuery)
@@ -35,3 +35,18 @@ class SavedQueryAdmin(admin.ModelAdmin):
 
     def changelist_view(self, request, extra_context=None):
         return redirect("django_qbe2:saved_list")
+
+
+@admin.register(ScheduledReport)
+class ScheduledReportAdmin(SavedQueryAdmin):
+    def get_urls(self):
+        return [
+            path(
+                "",
+                self.admin_site.admin_view(self.changelist_view),
+                name="django_qbe2_scheduledreport_changelist",
+            )
+        ]
+
+    def changelist_view(self, request, extra_context=None):
+        return redirect("django_qbe2:scheduled_list")

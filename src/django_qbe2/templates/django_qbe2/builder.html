@@ -4,8 +4,9 @@
 {% block breadcrumbs %}<div class="breadcrumbs"><a href="{% url 'admin:index' %}">{% translate "Home" %}</a> &rsaquo; {% translate "Reports" %}</div>{% endblock %}
 {% block content %}
 <div class="qbe-workspace">
-  <p><a href="{% url 'django_qbe2:saved_list' %}">{% translate "Saved queries" %}</a></p>
+  <p><a href="{% url 'django_qbe2:saved_list' %}">{% translate "Saved queries" %}</a> · <a href="{% url 'django_qbe2:scheduled_list' %}">{% translate "Scheduled reports" %}</a></p>
   {% if saved_query %}<p>{% translate "Editing a saved definition:" %} <strong>{{ saved_query.name }}</strong>. {% translate "Previewing does not save changes." %}</p>{% endif %}
+  {% if scheduled_report %}<p>{% translate "Editing the report definition for scheduled report:" %} <strong>{{ scheduled_report.name }}</strong>. {% translate "The schedule changes only when you explicitly update it." %}</p>{% endif %}
   <p class="qbe-intro">{% translate "Choose the data you need. Add conditions, preview results, and export your report." %}</p>
   <p id="qbe-feedback" class="visually-hidden" role="status" aria-live="polite"></p>
   {% if has_reports %}
@@ -22,6 +23,7 @@
     {% csrf_token %}
     <input type="hidden" name="report" value="{{ form.report.value }}">
     {% if saved_query %}<input type="hidden" name="saved_query" value="{{ saved_query.pk }}">{% endif %}
+    {% if scheduled_report %}<input type="hidden" name="scheduled_report" value="{{ scheduled_report.pk }}">{% endif %}
     {% if form.errors %}<div role="alert" id="query-errors">{{ form.non_field_errors }}{{ form.report.errors }}</div>{% endif %}
     <section class="module qbe-section qbe-mode-picker">
       <h2>{% translate "Report type" %}</h2>

@@ -1,0 +1,3 @@
+{% extends "django_qbe2/base.html" %}
+{% load i18n %}
+{% block breadcrumbs %}<div class="breadcrumbs"><a href="{% url 'admin:index' %}">{% translate "Home" %}</a> &rsaquo; <a href="{% url 'django_qbe2:builder' %}">{% translate "Reports" %}</a> &rsaquo; <a href="{% url 'django_qbe2:scheduled_list' %}">{% translate "Scheduled reports" %}</a></div>{% endblock %}

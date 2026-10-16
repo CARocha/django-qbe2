@@ -3,7 +3,7 @@
 {% block breadcrumbs %}<div class="breadcrumbs"><a href="{% url 'admin:index' %}">{% translate "Home" %}</a> &rsaquo; <a href="{% url 'django_qbe2:builder' %}">{% translate "Reports" %}</a> &rsaquo; {% translate "Results" %}</div>{% endblock %}
 {% block content %}
 <div class="qbe-workspace">
-  <p><a href="{% url 'django_qbe2:saved_list' %}">{% translate "Saved queries" %}</a></p>
+  <p><a href="{% url 'django_qbe2:saved_list' %}">{% translate "Saved queries" %}</a> · <a href="{% url 'django_qbe2:scheduled_list' %}">{% translate "Scheduled reports" %}</a></p>
   <div class="qbe-results-heading">
     {% if is_summary %}
       <p>{% blocktranslate count count=source_count %}{{ count }} source record{% plural %}{{ count }} source records{% endblocktranslate %}</p>
@@ -54,6 +54,16 @@
       <button type="submit">{% if saved_query %}{% translate "Save a copy" %}{% else %}{% translate "Save query" %}{% endif %}</button>
     </form>
     {% if owns_saved_query %}<p><a href="{% url 'django_qbe2:saved_settings' saved_query.pk %}">{% translate "Name and sharing" %}</a></p>{% endif %}
+  </section>
+  <section class="module qbe-section">
+    <h2>{% if scheduled_report %}{% translate "Update scheduled report" %}{% else %}{% translate "Schedule this report" %}{% endif %}</h2>
+    <p>{% translate "Scheduled reports keep an independent definition and email the complete bounded results to the recipients you choose." %}</p>
+    <form method="post" action="{% if scheduled_report %}{% url 'django_qbe2:scheduled_definition_update' scheduled_report.pk %}{% else %}{% url 'django_qbe2:scheduled_create' %}{% endif %}">
+      {% csrf_token %}
+      <input type="hidden" name="definition" value="{{ definition_json }}">
+      <input type="hidden" name="page_size" value="{{ page.page_size }}">
+      {% if scheduled_report %}<button type="submit">{% translate "Update scheduled report definition" %}</button>{% else %}<button type="submit">{% translate "Create schedule" %}</button>{% endif %}
+    </form>
   </section>
 </div>
 {% endblock %}

@@ -1,0 +1,15 @@
+{% extends "django_qbe2/scheduled_base.html" %}
+{% load i18n %}
+{% block content %}
+<div class="qbe-workspace">
+  <section class="module qbe-section">
+    <h1>{% translate "Delete scheduled report" %}</h1>
+    <p>{% blocktranslate with name=schedule.name %}Delete “{{ name }}” and its run history?{% endblocktranslate %}</p>
+    <form method="post">
+      {% csrf_token %}
+      <button type="submit" class="deletelink">{% translate "Delete scheduled report" %}</button>
+      <a href="{% url 'django_qbe2:scheduled_detail' schedule.pk %}">{% translate "Cancel" %}</a>
+    </form>
+  </section>
+</div>
+{% endblock %}

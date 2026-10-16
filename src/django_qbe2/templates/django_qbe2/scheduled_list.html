@@ -1,0 +1,23 @@
+{% extends "django_qbe2/scheduled_base.html" %}
+{% load i18n %}
+{% block content %}
+<div class="qbe-workspace">
+  <p>{% translate "Your scheduled reports email bounded results to the recipients you choose. Every run uses your current access to report data." %}</p>
+  <p><a href="{% url 'django_qbe2:builder' %}">{% translate "Build a report" %}</a></p>
+  {% for schedule in schedule_page %}
+  <section class="module qbe-section">
+    <h2><a href="{% url 'django_qbe2:scheduled_detail' schedule.pk %}">{{ schedule.name }}</a></h2>
+    <p>{% if schedule.enabled %}{% translate "Enabled" %}{% else %}{% translate "Paused" %}{% endif %} · {{ schedule.frequency|capfirst }}{% if schedule.weekday != None %}, {{ schedule.get_weekday_display }}{% endif %}</p>
+    <p>{% blocktranslate with time=schedule.local_time timezone=schedule.timezone %}Runs at {{ time }} ({{ timezone }}){% endblocktranslate %}</p>
+    <p>{% blocktranslate with next=schedule.next_run_local %}Next run: {{ next }}{% endblocktranslate %}</p>
+    {% if schedule.last_run_status %}<p>{% blocktranslate with status=schedule.last_run_status at=schedule.last_run_local %}Last run: {{ status }} at {{ at }}{% endblocktranslate %}</p>{% else %}<p>{% translate "No runs yet." %}</p>{% endif %}
+  </section>
+  {% empty %}<p class="qbe-empty">{% translate "No scheduled reports yet. Preview a report and choose Schedule this report." %}</p>{% endfor %}
+  {% if schedule_page.has_other_pages %}
+  <nav class="qbe-pagination" aria-label="{% translate 'Scheduled report pages' %}">
+    {% if schedule_page.has_previous %}<a href="?page={{ schedule_page.previous_page_number }}">{% translate "Previous page" %}</a>{% endif %}
+    <span>{% blocktranslate with current=schedule_page.number total=schedule_page.paginator.num_pages %}Page {{ current }} of {{ total }}{% endblocktranslate %}</span>
+    {% if schedule_page.has_next %}<a href="?page={{ schedule_page.next_page_number }}">{% translate "Next page" %}</a>{% endif %}
+  </nav>{% endif %}
+</div>
+{% endblock %}
