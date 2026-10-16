@@ -15,6 +15,23 @@ class BuilderTests(TestCase):
         self.assertNotContains(response, "owner__password")
         self.assertContains(response, "csrfmiddlewaretoken")
 
+    def test_preview_is_disabled_until_a_report_is_selected(self):
+        self.client.force_login(self.alice)
+
+        unselected = self.client.get(reverse("django_qbe2:builder"))
+        selected = self.client.get(
+            reverse("django_qbe2:builder"), {"report": "tests.order"}
+        )
+
+        self.assertRegex(
+            unselected.content.decode(), r'<input id="qbe-preview-report"[^>]*disabled'
+        )
+        self.assertContains(unselected, "Choose a report before previewing.")
+        self.assertContains(selected, 'id="qbe-preview-report"')
+        self.assertNotRegex(
+            selected.content.decode(), r'<input id="qbe-preview-report"[^>]*disabled'
+        )
+
     def test_catalog_empty_has_clear_message(self):
         self.client.force_login(self.bob)
         response = self.client.get("/qbe/")

@@ -70,7 +70,8 @@
       {% endif %}
       {{ form.page_size.as_field_group }}
     </section>
-    <div class="submit-row"><input type="submit" class="default" value="{% translate 'Preview report' %}"></div>
+    <div class="submit-row"><input id="qbe-preview-report" type="submit" class="default" value="{% translate 'Preview report' %}"{% if not form.report.value %} disabled aria-describedby="qbe-preview-help"{% endif %}></div>
+    {% if not form.report.value %}<p id="qbe-preview-help" class="help qbe-preview-help">{% translate "Choose a report before previewing." %}</p>{% endif %}
   </form>
   {{ field_data|json_script:"qbe-fields" }}
   {{ widget_labels|json_script:"qbe-widget-labels" }}

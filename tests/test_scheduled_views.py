@@ -72,6 +72,15 @@ class ScheduledReportViewsTests(TestCase):
         self.assertEqual(schedule.recipients, ["Sales@example.com"])
         self.assertGreater(schedule.next_run_at, timezone.now())
 
+    def test_schedule_form_groups_fields_in_responsive_layout(self):
+        response = self.begin_create(order_payload())
+
+        self.assertContains(response, "qbe-schedule-form")
+        self.assertContains(response, "qbe-schedule-grid")
+        self.assertContains(response, "qbe-schedule-field--wide")
+        self.assertContains(response, "qbe-schedule-field--full")
+        self.assertContains(response, 'id="id_recipients"')
+
     def test_create_schedule_copies_summary_definition(self):
         definition = summary_payload(
             group_by=["active"],
