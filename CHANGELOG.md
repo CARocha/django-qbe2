@@ -1,5 +1,15 @@
 # Changelog
 
+## Unreleased
+
+### Changed
+
+- Summary grouping, Count, Sum and Average's Sum/non-null Count inputs now run in
+  the database after a bounded count of authorized root rows. Only Average's
+  final Decimal division remains in Python. SQLite Decimal sums use scaled
+  integers where safe; unsupported high-precision fields fail clearly instead
+  of returning silently rounded totals.
+
 ## 0.1.0a12 — release candidate
 
 ### Changed

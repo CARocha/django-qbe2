@@ -48,7 +48,8 @@ class SummaryBarChartViewTests(TestCase):
             if query["sql"].lstrip().upper().startswith("SELECT")
             and '"tests_order"' in query["sql"]
         ]
-        self.assertEqual(len(business_reads), 1)
+        self.assertEqual(len(business_reads), 2)
+        self.assertTrue(any("GROUP BY" in sql.upper() for sql in business_reads))
 
     def test_multiple_metric_selection_is_temporary_and_invalid_ids_fall_back(self):
         payload = summary_payload(

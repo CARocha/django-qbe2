@@ -31,14 +31,18 @@ Completed increments
 - Summary bar charts for one grouping field with a selectable Count, Sum or
   Average metric. Charts show only the current page; the table and exports
   retain their existing behavior.
+- Database-native Count, Sum and Average over authorized summary sources, with
+  bounded source checks and exact Decimal handling across SQLite and PostgreSQL.
 
 Future ideas requiring separate design
 ---------------------------------------
 
-Future work will be chosen from user feedback and receive a scoped design,
-regression tests, public documentation and compatibility checks before
-implementation. Ideas that need separate design include custom operators,
-multiple database aliases, database-native aggregate execution, a public REST
-API, group sharing and scheduled reports. This roadmap sets priorities, not
-release dates or a promise of full SQL parity.
+The next planned increment is scheduled reports: a saved, independent query
+snapshot that can run on a daily or weekly schedule and email bounded CSV or
+optional Excel attachments to configured recipients. Each run will recheck the
+current user's report permissions and row policies. Further work will be chosen
+from user feedback and receive a scoped design, regression tests, public
+documentation and compatibility checks. Ideas that need separate design include
+custom operators, multiple database aliases, a public REST API and group sharing.
+This roadmap sets priorities, not release dates or a promise of full SQL parity.
 Arbitrary client SQL and Python evaluation remain outside the intended interface.

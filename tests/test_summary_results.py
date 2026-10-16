@@ -76,12 +76,14 @@ class SummaryExecutionTests(TestCase):
             and "SET_CONFIG" not in query["sql"].upper()
             and "STATEMENT_TIMEOUT" not in query["sql"].upper()
         ]
-        self.assertEqual(len(business_queries), 1)
-        sql = business_queries[0].lower()
-        self.assertIn("active", sql)
-        self.assertIn("total", sql)
-        self.assertNotIn("created_at", sql)
-        self.assertNotIn("reference", sql)
+        self.assertEqual(len(business_queries), 2)
+        aggregate_sql = next(
+            sql for sql in business_queries if "group by" in sql.lower()
+        ).lower()
+        self.assertIn("active", aggregate_sql)
+        self.assertIn("total", aggregate_sql)
+        self.assertNotIn("created_at", aggregate_sql)
+        self.assertNotIn("reference", aggregate_sql)
 
     def test_summary_execution_only_reads_business_data(self):
         definition = self.definition(

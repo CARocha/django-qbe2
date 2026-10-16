@@ -267,9 +267,21 @@ also returns a decimal value.
 The source is a distinct set of authorized root primary keys selected from
 ``Report.get_queryset(request)`` after conditions and related-field policies. This
 prevents joins from counting one root row repeatedly while preserving consumer
-annotations, filters and valid distinct semantics. Calculations run in bounded
-Python over selected group/metric values. They do not execute client SQL or mutate
-business data.
+annotations, filters and valid distinct semantics. The source cap is checked first;
+then the database groups the authorized rows and calculates Count, Sum and the
+Sum/non-null Count used by Average. Only completed group rows are read into Python
+for the final bounded Decimal division, deterministic ordering, pagination, charting
+and export. No client SQL is accepted and report execution does not mutate business
+data.
+
+Decimal Average uses the database Sum and non-null Count followed by bounded
+``Decimal`` division with the documented half-even rounding. On SQLite, Decimal Sum
+uses scaled integer aggregation when the field precision and source cap fit SQLite's
+integer range; PostgreSQL uses its exact numeric Sum. This preserves decimal cents
+without relying on SQLite's binary floating-point ``SUM(DecimalField)`` behavior.
+If a SQLite Decimal field exceeds the safe integer range for the configured source
+cap, the summary is rejected with guidance to use PostgreSQL or a lower-precision
+field instead of returning a rounded total.
 
 .. code-block:: json
 

@@ -31,8 +31,8 @@ commits before editing. Do not repeat completed work or overwrite another contri
 - Default Admin registers SavedQuery only as navigation to the authorized QBE
   list. Never expose raw add/change/delete/history model routes or JSON editing;
   adding navigation must not bypass ownership or sharing policies.
-- Database-native aggregates, generic relations, arbitrary SQL,
-  visual diagrams, multiple databases and ASGI-native streaming need separate work.
+- Generic relations, arbitrary SQL, visual diagrams, multiple databases and
+  ASGI-native streaming need separate work.
 - Runtime dependency is Django only. Documentation tools belong to the docs group,
   and test/lint tools belong to the dev group. Locked build/publishing tools belong
   to the release group; they are not runtime dependencies.
@@ -78,11 +78,12 @@ or used as numeric summary metrics. Saved definition versions remain v1-v3.
 
 Summary v3 definitions contain exactly report, where, group_by, metrics and ordering
 plus version. Count uses no field; Sum/Average accept registered integer/decimal
-fields. Build a distinct authorized root-PK source before reading group/metric values.
+fields. Build a distinct authorized root-PK source before calculating aggregates.
 Never return partial totals when the source cap is exceeded. Apply the output cap
-only after complete calculations and deterministic ordering. Accumulate Decimal
-without float conversion; Average uses half-even rounding. Saved and shared v3
-definitions always revalidate and execute with the current user's policies.
+only after complete calculations and deterministic ordering. Preserve exact Decimal
+sums (scaled integer aggregation on SQLite when safe, numeric Sum on PostgreSQL) and
+half-even Average rounding. Saved and shared v3 definitions always revalidate and
+  execute with the current user's policies.
 
 ## Workflow
 
