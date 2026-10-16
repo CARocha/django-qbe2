@@ -8,7 +8,7 @@
     <p>{% blocktranslate with frequency=schedule.frequency time=schedule.local_time timezone=schedule.timezone %}{{ frequency|capfirst }} at {{ time }} ({{ timezone }}){% endblocktranslate %}</p>
     {% if schedule.weekday_label %}<p>{% blocktranslate with weekday=schedule.weekday_label %}Every {{ weekday }}{% endblocktranslate %}</p>{% endif %}
     <p>{% blocktranslate with next=schedule.next_run_local %}Next run: {{ next }}{% endblocktranslate %}</p>
-    <p>{% blocktranslate with format=schedule.get_format_display count=recipient_count %}{{ format }} attachment · {{ count }} recipient{% plural %}{{ format }} attachment · {{ count }} recipients{% endblocktranslate %}</p>
+    <p>{% blocktranslate count count=recipient_count with format=schedule.get_format_display %}{{ format }} attachment · {{ count }} recipient{% plural %}{{ format }} attachment · {{ count }} recipients{% endblocktranslate %}</p>
     <p>{% translate "Recipients are hidden from one another in each email." %}</p>
     <div class="qbe-saved-actions">
       <a href="{% url 'django_qbe2:scheduled_edit' schedule.pk %}">{% translate "Edit schedule" %}</a>

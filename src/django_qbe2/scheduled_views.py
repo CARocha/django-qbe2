@@ -47,10 +47,9 @@ def _decorate_schedule(schedule):
     except (ZoneInfoNotFoundError, ValueError):
         selected_zone = UTC
     schedule.next_run_local = timezone.localtime(schedule.next_run_at, selected_zone)
-    if schedule.last_run_at:
-        schedule.last_run_local = timezone.localtime(
-            schedule.last_run_at, selected_zone
-        )
+    last_run_at = getattr(schedule, "last_run_at", None)
+    if last_run_at:
+        schedule.last_run_local = timezone.localtime(last_run_at, selected_zone)
     weekdays = (
         _("Monday"),
         _("Tuesday"),

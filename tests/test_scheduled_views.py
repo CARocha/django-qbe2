@@ -128,6 +128,17 @@ class ScheduledReportViewsTests(TestCase):
 
         self.assertEqual(response.status_code, 404)
 
+    def test_owner_can_open_schedule_detail_before_first_run(self):
+        schedule = self.schedule()
+
+        response = self.client.get(
+            reverse("django_qbe2:scheduled_detail", args=[schedule.pk])
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, schedule.name)
+        self.assertContains(response, "No runs yet.")
+
     def test_saved_query_sharing_does_not_share_schedule(self):
         query = SavedQuery.objects.create(
             owner=self.other,
