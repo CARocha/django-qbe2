@@ -69,6 +69,19 @@ class ExplorerViewTests(TestCase):
         self.assertContains(response, "Preview report")
         self.assertContains(response, "customer__name")
 
+    def test_explorer_fields_have_one_compact_action_menu_each(self):
+        response = self.client.get("/qbe/", {"report": "tests.order"})
+        field_count = len(response.context["explorer_data"].fields)
+        model_count = len(response.context["explorer_data"].nodes)
+
+        self.assertEqual(
+            response.content.count(b'data-explorer-menu="field"'), field_count
+        )
+        self.assertEqual(
+            response.content.count(b"data-explorer-menu-trigger"), field_count
+        )
+        self.assertEqual(response.content.count(b"data-explorer-model"), model_count)
+
     def test_field_labels_are_escaped_in_the_hierarchy_and_json_data(self):
         report = self.catalog["tests.order"].report
         original = report.field_labels

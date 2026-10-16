@@ -27,22 +27,30 @@
   <h3>{% translate "Fields by model" %}</h3>
   <ul class="qbe-explorer-models">
     {% for node in explorer_data.nodes %}
-    <li>
-      <strong>{{ node.label }}</strong>
-      <ul>
+    <li data-explorer-model>
+      <details class="qbe-explorer-model" {% if node.is_root %}open{% endif %}>
+        <summary><strong>{{ node.label }}</strong></summary>
+        <ul class="qbe-explorer-fields">
         {% for field in explorer_data.fields %}
         {% if field.owner_id == node.id %}
-        <li data-explorer-field data-field-path="{{ field.path }}"><span>{{ field.label }}</span> <code>{{ field.path }}</code>
-          {% if field.multi_valued %}<span class="help">{% translate "Multiple values; available for columns and filters only." %}</span>{% endif %}
-          <span class="qbe-explorer-actions" hidden>
-            <button type="button" data-explorer-action="column" data-field-path="{{ field.path }}">{% translate "Add column" %}</button>
-            {% if field.groupable %}<button type="button" data-explorer-action="group" data-field-path="{{ field.path }}">{% translate "Add summary group" %}</button>{% endif %}
-            <button type="button" data-explorer-action="filter" data-field-path="{{ field.path }}">{% translate "Add filter" %}</button>
-          </span>
+        <li class="qbe-explorer-field" data-explorer-field data-field-path="{{ field.path }}">
+          <div class="qbe-explorer-field-description">
+            <span data-field-label>{{ field.label }}</span> <code>{{ field.path }}</code>
+            {% if field.multi_valued %}<span class="help">{% translate "Multiple values; available for columns and filters only." %}</span>{% endif %}
+          </div>
+          <details class="qbe-explorer-actions" data-explorer-menu="field" hidden>
+            <summary class="button" data-explorer-menu-trigger aria-label="{% blocktranslate with field_label=field.label %}Add actions for {{ field_label }}{% endblocktranslate %}">{% translate "Add" %}</summary>
+            <div class="qbe-explorer-action-list">
+              <button type="button" data-explorer-action="column" data-field-path="{{ field.path }}">{% translate "Add column" %}</button>
+              {% if field.groupable %}<button type="button" data-explorer-action="group" data-field-path="{{ field.path }}">{% translate "Add summary group" %}</button>{% endif %}
+              <button type="button" data-explorer-action="filter" data-field-path="{{ field.path }}">{% translate "Add filter" %}</button>
+            </div>
+          </details>
         </li>
         {% endif %}
         {% endfor %}
-      </ul>
+        </ul>
+      </details>
     </li>
     {% endfor %}
   </ul>

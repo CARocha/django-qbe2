@@ -102,6 +102,9 @@
 
     enhanced.hidden = false;
     document.querySelectorAll(".qbe-explorer-actions").forEach(actions => { actions.hidden = false; });
+    document.querySelectorAll(".qbe-explorer-actions > summary").forEach(trigger => {
+      trigger.addEventListener("click", event => event.stopPropagation());
+    });
     document.querySelectorAll("[data-explorer-action]").forEach(button => {
       const action = button.dataset.explorerAction;
       if (action === "column" && !document.querySelector('input[name="columns"]')) button.hidden = true;
@@ -112,8 +115,13 @@
     enhanced.querySelector("#qbe-explorer-search").addEventListener("input", event => {
       const search = event.currentTarget.value.trim().toLowerCase();
       document.querySelectorAll("[data-explorer-field]").forEach(item => {
-        const searchable = `${item.dataset.fieldPath} ${item.querySelector("span").textContent}`.toLowerCase();
+        const searchable = `${item.dataset.fieldPath} ${item.querySelector("[data-field-label]").textContent}`.toLowerCase();
         item.hidden = !searchable.includes(search);
+      });
+      document.querySelectorAll("[data-explorer-model]").forEach(model => {
+        const visibleFields = [...model.querySelectorAll("[data-explorer-field]")].filter(item => !item.hidden);
+        model.hidden = visibleFields.length === 0;
+        if (search && visibleFields.length) model.querySelector(".qbe-explorer-model").open = true;
       });
     });
 
@@ -131,6 +139,7 @@
           }
           control.checked = true;
           control.dispatchEvent(new Event("change", {bubbles: true}));
+          button.closest(".qbe-explorer-actions").open = false;
           announce(`${path} added to ${action === "column" ? "columns" : "summary grouping"}.`);
           return;
         }
@@ -152,6 +161,7 @@
         }
         select.value = path;
         select.dispatchEvent(new Event("change", {bubbles: true}));
+        button.closest(".qbe-explorer-actions").open = false;
         announce(`${path} selected as a filter field.`);
       });
     });
