@@ -22,7 +22,7 @@
       <title id="qbe-chart-svg-title">{{ bar_chart.title }}: {{ bar_chart.metric_label }}</title>
       <desc id="qbe-chart-svg-description">{{ bar_chart.description }} {% translate "The adjacent table provides exact values." %}</desc>
       <text class="qbe-chart-axis-title" x="12" y="22">{{ bar_chart.group_label }}</text>
-      <text class="qbe-chart-axis-title" x="300" y="{{ bar_chart.height|add:'-2' }}" text-anchor="middle">{{ bar_chart.metric_label }}</text>
+      <text class="qbe-chart-axis-title" x="300" y="22" text-anchor="middle">{{ bar_chart.metric_label }}</text>
       <line class="qbe-chart-zero-axis" x1="{{ bar_chart.baseline }}" y1="30" x2="{{ bar_chart.baseline }}" y2="{{ bar_chart.height|add:'-30' }}" />
       {% for tick in bar_chart.ticks %}
       <line class="qbe-chart-tick" x1="{{ tick.x }}" y1="{{ bar_chart.height|add:'-32' }}" x2="{{ tick.x }}" y2="{{ bar_chart.height|add:'-27' }}" />
