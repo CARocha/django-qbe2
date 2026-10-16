@@ -221,7 +221,7 @@ wheels = [
 
 [[package]]
 name = "django-qbe2"
-version = "0.1.0a10"
+version = "0.1.0a11"
 source = { editable = "." }
 dependencies = [
     { name = "django" },

@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.1.0a11 — release candidate
+
+### Added
+
+- A visual report explorer for browsing registered, authorized fields and relations,
+  then adding columns, filters and summary groupings to a report.
+- Bar charts for one-dimensional grouped summaries, with selectable Count, Sum or
+  Average metrics and pagination-aware display.
+
 ## 0.1.0a10 — release candidate
 
 ### Added
