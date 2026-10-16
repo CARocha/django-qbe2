@@ -4,10 +4,11 @@ Release status and publication
 Current status
 --------------
 
-The current alpha candidate is ``0.1.0a16``. It is experimental: its configuration
-API may change before a stable release. A metadata version or Git tag does not
-prove publication; verify the corresponding PyPI/TestPyPI index entry and the
-successful Publish workflow. Version metadata has one source: ``pyproject.toml``.
+The first stable release is ``1.0.0``. It establishes ``django_qbe2.registry`` and
+the documented settings and namespaced URLs as the supported public configuration
+surface. A metadata version or Git tag does not prove publication; verify the
+corresponding PyPI/TestPyPI index entry and successful Publish workflow. Version
+metadata has one source: ``pyproject.toml``.
 
 The MVP includes report registration, explicit row policies, related-row checks,
 typed AND/OR/NOT groups, bounded Count/Sum/Average summaries, stable pages, safe
@@ -60,10 +61,11 @@ Publish to TestPyPI first
 
 #. Review and integrate the release branch into ``main``. The metadata version,
    changelog and installation examples must agree.
-#. Run the app/demo tests across all four Python/Django combinations on both databases, strict documentation builds,
-   lint/format and the native dependency audit. Locked build/publishing dependencies
-   live in the ``release`` group, outside the runtime requirements.
-#. Create the annotated tag ``v0.1.0a16`` at the verified main commit and push only
+#. Run the app/demo tests across all four Python/Django combinations on both
+   databases, strict documentation builds, lint/format and the native dependency
+   audit. Locked build/publishing dependencies live in the ``release`` group,
+   outside the runtime requirements.
+#. Create the annotated tag ``v1.0.0`` at the verified main commit and push only
    main and that tag. Personal/archived branches must remain local.
 #. In GitHub Actions, select **Publish** > Run workflow. Select the release tag,
    choose destination ``testpypi`` and leave source_run_id empty.
@@ -95,6 +97,13 @@ Promote the verified files to PyPI
 #. The last job checks PyPI's hashes and performs external consumer installs in all
    four supported Python/Django combinations.
    Confirm the public project/version page before announcing availability.
+
+Create the GitHub release from the same ``v1.0.0`` tag after the PyPI promotion
+passes. Use the matching changelog entry as its notes. Publish the Sphinx site from
+``main`` with the Documentation workflow and verify the live installation page.
+Then update the repository description and share the release and issue tracker with
+the Django community. Keep the first post-launch follow-up focused on reproducible
+bug reports and compatibility feedback.
 
 If a post-upload verification fails, inspect the error and repair the release
 process; the uploaded version still exists. Rerun only the failed verification

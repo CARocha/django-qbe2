@@ -2,9 +2,9 @@ Public registration API
 =======================
 
 The supported configuration surface is ``django_qbe2.registry`` plus Django
-settings and namespaced URLs. Internal catalog, validation, engine and form helpers
-are implementation details; importing them does not establish a stable public API.
-The package is experimental, so follow release notes before upgrading.
+settings and namespaced URLs. This public API follows semantic versioning. Internal
+catalog, validation, engine and form helpers are implementation details; importing
+them does not establish a supported public API. Review release notes before upgrading.
 
 .. py:module:: django_qbe2.registry
 

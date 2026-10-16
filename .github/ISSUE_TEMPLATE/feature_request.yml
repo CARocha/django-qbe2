@@ -1,0 +1,37 @@
+name: Feature request
+description: Suggest a generally useful improvement to report building.
+title: "[Feature]: "
+body:
+  - type: markdown
+    attributes:
+      value: >-
+        Search existing issues first. Describe a reusable need rather than a
+        feature tied only to one application's private schema or data.
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem are you trying to solve?
+      description: Explain the reporting task and who needs to do it.
+    validations:
+      required: true
+  - type: textarea
+    id: desired
+    attributes:
+      label: What would you like Django QBE 2 to do?
+      description: Describe the behavior from a user's point of view.
+    validations:
+      required: true
+  - type: textarea
+    id: example
+    attributes:
+      label: Example use case
+      description: Use a small synthetic model or report example. Do not include real user data.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives you considered
+      description: Optional. Mention current workarounds or other approaches.
+    validations:
+      required: false

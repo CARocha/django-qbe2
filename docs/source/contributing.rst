@@ -6,6 +6,16 @@ for code, comments, commits, UI text and public documentation. Start each
 significant feature from ``main`` in its own branch. Add meaningful tests before
 changing behavior and review the diff before integration.
 
+Issue reports
+-------------
+
+Use the `GitHub issue forms <https://github.com/CARocha/django-qbe2/issues/new/choose>`_
+to report a bug or suggest a feature. Bugs should include the package, Python,
+Django and database versions plus a minimal synthetic reproduction. Feature requests
+should describe a reusable workflow rather than depend on one application's private
+schema. Never include credentials, personal data, production records or sensitive
+query values.
+
 Install development tools
 -------------------------
 

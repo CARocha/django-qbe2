@@ -2,7 +2,7 @@
 
 ## Start here
 
-Django QBE 2 is an experimental reusable reporting app for Python 3.13–3.14 and
+Django QBE 2 is a reusable reporting app for Python 3.13–3.14 and
 Django 6.0–6.1. Read README.md for setup, docs/source/index.rst for the public
 documentation, and CHANGELOG.md for the current scope. Check Git status and recent
 commits before editing. Do not repeat completed work or overwrite another contributor's changes.

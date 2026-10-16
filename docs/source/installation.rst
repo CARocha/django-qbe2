@@ -10,19 +10,18 @@ of your Python and Django series. Other versions and databases are not part of
 the current compatibility promise. Django is the only runtime dependency;
 Sphinx, Ruff and database test drivers are development tools.
 
-Install the alpha
------------------
+Install Django QBE 2
+--------------------
 
-The current alpha candidate is ``0.1.0a16``. Check its availability on PyPI before
-installing it in your host project's virtual environment:
+Install the stable release in your host project's virtual environment:
 
 .. code-block:: console
 
-   python -m pip install django-qbe2==0.1.0a16
+   python -m pip install django-qbe2
 
-The explicit version opts into the alpha. You do not need to upgrade a host project
-from Django 6.0 to 6.1 to use this release. Version 0.1.0a1 supported only Python
-3.14/Django 6.1; Python 3.13/Django 6.0 consumers need 0.1.0a2 or later.
+You do not need to upgrade a host project from Django 6.0 to Django 6.1 to use
+Django QBE 2. Pin a version in your application's dependency file when you need
+reproducible deployments.
 
 From the source checkout, you can always build and install a local wheel:
 
@@ -34,7 +33,7 @@ In your host project's environment, install that wheel using its absolute path:
 
 .. code-block:: console
 
-   python -m pip install /absolute/path/to/django-qbe2/dist/django_qbe2-0.1.0a16-py3-none-any.whl
+   python -m pip install /absolute/path/to/django-qbe2/dist/django_qbe2-1.0.0-py3-none-any.whl
 
 The distribution name is ``django-qbe2``; the import and app name is
 ``django_qbe2``. The wheel contains namespaced templates and static assets. It
@@ -74,11 +73,11 @@ processors used by Django Admin. The initial implementation uses the default
 ``admin.site`` for its login and context; it does not automatically adopt a custom
 AdminSite.
 
-From the ``0.1.0a4`` candidate, QBE includes migrations for saved queries and their
-recipient relationships, using your ``AUTH_USER_MODEL``. Apply them with
-``manage.py migrate`` when upgrading; earlier alphas have no QBE tables.
-Your host project's auth, sessions and business apps still need their normal migrations. In production,
-serve the packaged static files through your existing Django static-file setup:
+QBE includes migrations for saved queries, schedules and their user relationships,
+using your ``AUTH_USER_MODEL``. Apply them with ``manage.py migrate`` when installing
+or upgrading. Your host project's auth, sessions and business apps still need their
+normal migrations. In production, serve the packaged static files through your
+existing Django static-file setup:
 
 .. code-block:: console
 
