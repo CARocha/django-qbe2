@@ -304,6 +304,30 @@ show truncation. Related grouping or metric fields activate the same target repo
 permissions and target row policy used by row reports. Sharing a v3 definition
 never shares its creator's source rows or totals.
 
+Summary bar charts
+~~~~~~~~~~~~~~~~~~
+
+When a summary groups by exactly one field and the current page contains groups,
+QBE displays a horizontal bar chart below the results table. Count, Sum and
+Average metrics are supported. With one calculation, the chart uses it directly;
+with several, choose **Calculation to chart** and select **Update chart**. Changing
+the calculation starts again at page 1, while ordinary pagination preserves the
+selected calculation.
+
+The chart visualizes only the groups on the current page. It does not change the
+query, its saved definition or the complete CSV/Excel export. The table remains
+the detailed view and preserves exact values; chart bar positions are scaled for
+comparison. Zero and negative values use a zero-centered axis. For summaries
+without a grouping field, with multiple grouping fields, or with no groups on
+the current page, QBE explains why it cannot show a chart. These results remain
+available in the table and exports.
+
+The inline SVG includes an accessible title, description, category labels and a
+numeric axis. Category names are shown in the chart and remain fully available
+in the adjacent table. The chart adds no runtime dependency and uses the already
+computed summary page; it performs no additional business-data query. The metric
+selection is temporary presentation state and is not stored with saved queries.
+
 NULL and authorization semantics
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

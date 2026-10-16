@@ -28,18 +28,17 @@ Completed increments
   the default dependency-free format.
 - Authorized visual field and relationship explorer with builder shortcuts,
   a server-rendered fallback and no automatic model discovery.
+- Summary bar charts for one grouping field with a selectable Count, Sum or
+  Average metric. Charts show only the current page; the table and exports
+  retain their existing behavior.
 
-Next scoped increments
-----------------------
+Future ideas requiring separate design
+---------------------------------------
 
-#. **Summary bar charts:** a one-dimensional bar chart for one selected summary
-   metric, alongside the existing tabular results and without extra data reads.
-
-Each increment gets a scoped design, its own feature branch, regression tests,
-public documentation and a compatibility check before integration. This order
-sets priorities, not release dates or a promise of full SQL parity.
-
-Other ideas needing separate design include custom operators, multiple database
-aliases, database-native aggregate execution, a public REST API, group sharing and
-scheduled reports.
+Future work will be chosen from user feedback and receive a scoped design,
+regression tests, public documentation and compatibility checks before
+implementation. Ideas that need separate design include custom operators,
+multiple database aliases, database-native aggregate execution, a public REST
+API, group sharing and scheduled reports. This roadmap sets priorities, not
+release dates or a promise of full SQL parity.
 Arbitrary client SQL and Python evaluation remain outside the intended interface.
