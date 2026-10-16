@@ -6,6 +6,7 @@ from typing import ClassVar
 from django.core.exceptions import ImproperlyConfigured
 from django.db.models import Model, QuerySet
 from django.http import HttpRequest
+from django.test import RequestFactory
 
 
 class Report(ABC):
@@ -16,6 +17,16 @@ class Report(ABC):
     @abstractmethod
     def get_queryset(self, request: HttpRequest) -> QuerySet:
         """Return the rows this request is allowed to read."""
+
+    def get_scheduled_request(self, *, owner, schedule) -> HttpRequest:
+        """Build request context for a scheduled execution.
+
+        Override this when a report policy needs context supplied by
+        middleware, such as a tenant. The scheduled runner verifies the owner.
+        """
+        request = RequestFactory().get("/")
+        request.user = owner
+        return request
 
 
 _reports: dict[str, Report] = {}
