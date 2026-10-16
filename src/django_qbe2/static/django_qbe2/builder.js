@@ -77,7 +77,7 @@
           y: String((y1 + y2) / 2 + offset - 8),
           class: "qbe-explorer-edge-label",
           "text-anchor": "middle"
-        }, `${edge.accessor} (${edge.reverse ? "reverse" : "forward"}; ${edge.multi_valued ? "many" : "one"})`));
+        }, `${edge.label} (${edge.reverse ? "reverse" : "forward"}; ${edge.multi_valued ? "many" : "one"})`));
       }
 
       const defs = makeSvg("defs", {});
@@ -110,9 +110,9 @@
     drawDiagram();
 
     enhanced.querySelector("#qbe-explorer-search").addEventListener("input", event => {
-      const search = event.currentTarget.value.trim().toLocaleLowerCase();
+      const search = event.currentTarget.value.trim().toLowerCase();
       document.querySelectorAll("[data-explorer-field]").forEach(item => {
-        const searchable = `${item.dataset.fieldPath} ${item.querySelector("span").textContent}`.toLocaleLowerCase();
+        const searchable = `${item.dataset.fieldPath} ${item.querySelector("span").textContent}`.toLowerCase();
         item.hidden = !searchable.includes(search);
       });
     });
