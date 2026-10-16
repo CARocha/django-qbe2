@@ -1,5 +1,6 @@
 import json
 import logging
+from dataclasses import asdict
 from functools import wraps
 
 from django.contrib import admin
@@ -18,6 +19,7 @@ from django_qbe2.choices import choice_value
 from django_qbe2.definitions import SummaryDefinition
 from django_qbe2.engine import build_queryset, build_summary_source
 from django_qbe2.execution import execute_summary, get_page
+from django_qbe2.explorer import build_explorer
 from django_qbe2.exports import (
     csv_response,
     excel_available,
@@ -68,12 +70,18 @@ def report_errors(view):
 
 
 def builder_context(request, catalog, form):
-    fields = catalog[form.report_id].fields if form.report_id in catalog else {}
+    selected_report = catalog.get(form.report_id)
+    fields = selected_report.fields if selected_report else {}
+    explorer_data = (
+        build_explorer(selected_report, catalog) if selected_report else None
+    )
     return {
         **admin.site.each_context(request),
         "title": _("Query by Example"),
         "form": form,
         "catalog": catalog,
+        "explorer_data": explorer_data,
+        "explorer_json": asdict(explorer_data) if explorer_data else None,
         "has_reports": bool(catalog),
         "site_header": _("Django QBE 2"),
         "field_data": {
@@ -108,9 +116,11 @@ def builder_view(request: HttpRequest):
     if selected and selected not in catalog:
         raise Http404("Report not available.")
     form = QueryBuilderForm(catalog=catalog, initial={"report": selected})
-    return render(
-        request, "django_qbe2/builder.html", builder_context(request, catalog, form)
-    )
+    context = builder_context(request, catalog, form)
+    if not selected:
+        context["explorer_data"] = None
+        context["explorer_json"] = None
+    return render(request, "django_qbe2/builder.html", context)
 
 
 def query_form(request, catalog, data=None):

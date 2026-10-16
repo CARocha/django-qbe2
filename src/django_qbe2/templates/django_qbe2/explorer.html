@@ -1,0 +1,36 @@
+{% load i18n %}
+<section class="module qbe-section qbe-explorer" aria-labelledby="qbe-explorer-title">
+  <h2 id="qbe-explorer-title">{% translate "Registered fields and relationships" %}</h2>
+  <p>{% translate "This report uses only fields registered for models you are authorized to view." %}</p>
+  <h3>{% translate "Relationship paths" %}</h3>
+  {% if explorer_data.edges %}
+  <ul class="qbe-explorer-relations">
+    {% for edge in explorer_data.edges %}
+    <li data-edge-id="{{ edge.id }}">
+      <span>{{ edge.source_id }}</span> &rarr; <span>{{ edge.target_id }}</span>:
+      {{ edge.label }} ({% if edge.reverse %}{% translate "reverse" %}{% else %}{% translate "forward" %}{% endif %};
+      {% if edge.multi_valued %}{% translate "multiple" %}{% else %}{% translate "single" %}{% endif %})
+    </li>
+    {% endfor %}
+  </ul>
+  {% else %}
+  <p>{% translate "This report has no registered relationships." %}</p>
+  {% endif %}
+  <h3>{% translate "Fields by model" %}</h3>
+  <ul class="qbe-explorer-models">
+    {% for node in explorer_data.nodes %}
+    <li>
+      <strong>{{ node.label }}</strong>
+      <ul>
+        {% for field in explorer_data.fields %}
+        {% if field.owner_id == node.id %}
+        <li><span>{{ field.label }}</span> <code>{{ field.path }}</code>
+          {% if field.multi_valued %}<span class="help">{% translate "Multiple values; available for columns and filters only." %}</span>{% endif %}
+        </li>
+        {% endif %}
+        {% endfor %}
+      </ul>
+    </li>
+    {% endfor %}
+  </ul>
+</section>

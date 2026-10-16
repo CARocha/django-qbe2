@@ -14,6 +14,10 @@
     <button type="submit" class="button">{% translate "Choose report" %}</button>
   </form>
   {% url 'django_qbe2:results' as results_url %}
+  {% if explorer_data %}
+  {% include "django_qbe2/explorer.html" %}
+  {{ explorer_json|json_script:"qbe-explorer-data" }}
+  {% endif %}
   <form method="post" action="{{ results_url }}" id="qbe-builder">
     {% csrf_token %}
     <input type="hidden" name="report" value="{{ form.report.value }}">
