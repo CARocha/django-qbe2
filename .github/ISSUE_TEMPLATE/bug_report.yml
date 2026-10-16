@@ -1,0 +1,69 @@
+name: Bug report
+description: Report a reproducible problem in Django QBE 2.
+title: "[Bug]: "
+body:
+  - type: markdown
+    attributes:
+      value: >-
+        Search existing issues first. Do not include credentials, personal data,
+        production records, private query values or unredacted logs.
+  - type: input
+    id: qbe-version
+    attributes:
+      label: Django QBE 2 version
+      description: For example, 1.0.0.
+      placeholder: 1.0.0
+    validations:
+      required: true
+  - type: input
+    id: python-version
+    attributes:
+      label: Python version
+      placeholder: 3.14.0
+    validations:
+      required: true
+  - type: input
+    id: django-version
+    attributes:
+      label: Django version
+      placeholder: 6.1.0
+    validations:
+      required: true
+  - type: input
+    id: database
+    attributes:
+      label: Database and version
+      placeholder: PostgreSQL 18
+    validations:
+      required: true
+  - type: textarea
+    id: summary
+    attributes:
+      label: What happened?
+      description: Include the report type and relevant configuration, using synthetic names and values.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps to reproduce
+      description: Provide the smallest reproducible example possible.
+      placeholder: |
+        1. Register a report with ...
+        2. Open ...
+        3. Select ...
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+      description: Add a redacted traceback or browser-console message if relevant.
+    validations:
+      required: true

@@ -1,8 +1,8 @@
 Saved queries and sharing
 =========================
 
-This feature is included in the ``0.1.0a4`` candidate. Earlier published alphas
-have no saved-query storage. Check :doc:`releases` for publication status.
+Saved queries are included in the stable release. The package stores definitions,
+not report result rows; see :doc:`releases` for the release and compatibility policy.
 
 Set up storage
 --------------

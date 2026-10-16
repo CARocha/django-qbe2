@@ -5,13 +5,14 @@ Choose columns, add typed conditions, follow model relationships, preview pagina
 results, build grouped summaries, export CSV or Excel, and email scheduled snapshots.
 Supports **Python 3.13–3.14 and Django 6.0–6.1**.
 
-**Documentation:** [Installation, usage, report registration, relationships and more](https://carocha.github.io/django-qbe2/).
+**Documentation:** [Installation, usage, report registration and relationships](https://carocha.github.io/django-qbe2/).
 
-**Experimental alpha:** this is the initial implementation, not a production
-release or a drop-in replacement for the original package. The current release
-candidate is `0.1.0a16`; check [PyPI](https://pypi.org/project/django-qbe2/) for its
-availability. Inspired by [versae/qbe](https://github.com/versae/qbe), rebuilt around
-Django's ORM, explicit permissions and typed query definitions.
+**Issues:** [Report a bug or request a reusable feature](https://github.com/CARocha/django-qbe2/issues/new/choose).
+
+**First stable release: `1.0.0`.** Django QBE 2 is a new implementation inspired by
+[versae/qbe](https://github.com/versae/qbe), rebuilt around Django's ORM, explicit
+permissions and typed query definitions. See the [release notes](CHANGELOG.md) and
+[compatibility policy](https://carocha.github.io/django-qbe2/installation.html#requirements).
 
 ## Try the demo
 
@@ -33,11 +34,10 @@ An optional superuser created with `createsuperuser` can inspect all demo record
 
 ## Install in another project
 
-In your project's virtual environment, install the explicit alpha version after
-checking its availability on PyPI:
+Install the stable package in your project's virtual environment:
 
 ```sh
-python -m pip install django-qbe2==0.1.0a16
+python -m pip install django-qbe2
 ```
 
 For Excel workbooks as well as CSV, install the optional extra:
@@ -50,7 +50,7 @@ To try the checkout before publication, build and install its wheel:
 
 ```sh
 uv build
-python -m pip install /absolute/path/to/dist/django_qbe2-0.1.0a16-py3-none-any.whl
+python -m pip install /absolute/path/to/dist/django_qbe2-1.0.0-py3-none-any.whl
 ```
 
 Add the app and mount its namespaced URLs alongside Django Admin:

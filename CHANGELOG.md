@@ -2,6 +2,26 @@
 
 ## Unreleased
 
+## 1.0.0 — first stable release
+
+### Added
+
+- Authorized row and summary reports with typed filters, nested condition groups,
+  model-choice selectors, grouped charts, pagination and CSV exports.
+- Forward, reverse and ManyToMany relationships with explicit related-row policies
+  and bounded collection values.
+- Saved reports with private defaults and explicit read/copy sharing, optional typed
+  Excel exports, scheduled email snapshots and a visual field explorer.
+- Support for Python 3.13–3.14, Django 6.0–6.1, and SQLite/PostgreSQL, verified by
+  the project compatibility suite.
+
+### Stable API
+
+- Establish `django_qbe2.registry` and the documented settings and namespaced URLs
+  as the supported public configuration surface. Internal helpers remain private.
+- This is a new implementation inspired by `versae/qbe`; it is not a drop-in
+  replacement for the original package.
+
 ## 0.1.0a16 — release candidate
 
 ### Fixed

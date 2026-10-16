@@ -11,6 +11,8 @@ changes, run the relevant checks and review the diff before integration.
 Report defects with the Python/Django/database versions, a synthetic reproduction,
 expected behavior and actual behavior. Do not include credentials, private row data
 or sensitive query payloads. Describe the intended workflow for feature requests.
+Use the [bug report and feature request forms](https://github.com/CARocha/django-qbe2/issues/new/choose);
+they help keep reports reproducible and focused on reusable behavior.
 
 Keep personal plans, transcripts and local agent state out of commits. Documentation
 sources are public; generated HTML, local databases, environments and secrets are not.

@@ -5,11 +5,11 @@ Build reports without writing SQL: choose columns, add typed conditions or summa
 calculations, preview pages and download CSV or optional Excel workbooks. Django QBE 2 is a reusable app for **Python 3.13–3.14 and
 Django 6.0–6.1**, inspired by `versae/qbe <https://github.com/versae/qbe>`_.
 
-.. warning::
+.. note::
 
-   This is an experimental alpha. Check PyPI for the ``0.1.0a16`` candidate's
-   availability, or use the checkout/a locally built wheel. The public
-   configuration API may change before a stable release.
+   Version ``1.0.0`` is the first stable release. The public registration API is
+   documented in :doc:`api`; compatibility follows the project's supported Python
+   and Django versions and the release notes.
 
 Start with :doc:`quickstart` to try the synthetic demo, or :doc:`installation` to
 add the app to an existing project. Read :doc:`reports` before exposing real data:

@@ -40,11 +40,11 @@ Completed increments
 Release readiness
 -----------------
 
-The planned feature set for the first stable release is implemented. Remaining
-work is release hardening: complete SQLite/PostgreSQL CI on all supported Python
-and Django combinations, review the final changes, validate the published-consumer
-workflow, and prepare the ``1.0.0`` release. This roadmap sets priorities, not a
-release date or a promise of full SQL parity.
+The planned feature set for the first stable release is implemented. Version
+``1.0.0`` establishes the documented registration API and supported runtime matrix
+as stable contracts. Future work will be prioritized from user feedback and shipped
+with compatibility checks and release notes. This roadmap does not promise full SQL
+parity or a specific schedule for requested features.
 
 Ideas requiring separate design
 --------------------------------

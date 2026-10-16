@@ -4,8 +4,8 @@ build-backend = "hatchling.build"
 
 [project]
 name = "django-qbe2"
-version = "0.1.0a16"
-description = "A reusable Django app for authorized query-by-example reports."
+version = "1.0.0"
+description = "Build authorized reports from Django models without writing SQL."
 readme = "README.md"
 requires-python = ">=3.13,<3.15"
 license = "MIT"
@@ -13,7 +13,7 @@ license-files = ["LICENSE"]
 authors = [{ name = "Carlos A. Rocha" }]
 dependencies = ["Django>=6.0,<6.2"]
 classifiers = [
-  "Development Status :: 3 - Alpha",
+  "Development Status :: 5 - Production/Stable",
   "Framework :: Django",
   "Framework :: Django :: 6.0",
   "Framework :: Django :: 6.1",
@@ -26,7 +26,7 @@ classifiers = [
 excel = ["openpyxl>=3.1,<4"]
 
 [project.urls]
-Documentation = "https://github.com/CARocha/django-qbe2/tree/main/docs"
+Documentation = "https://carocha.github.io/django-qbe2/"
 Repository = "https://github.com/CARocha/django-qbe2"
 Issues = "https://github.com/CARocha/django-qbe2/issues"
 
