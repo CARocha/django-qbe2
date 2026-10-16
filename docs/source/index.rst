@@ -24,6 +24,7 @@ Django model permissions and each report's row policy are both required.
    reports
    querying
    saved_queries
+   scheduled_reports
    configuration
    troubleshooting
 

@@ -99,7 +99,8 @@ Browser checks
 Run the demo and choose your own synthetic-user password. Check report/column
 selection, typed conditions, row addition/deletion, ordering, pagination, editing,
 CSV across pages and users without permissions. Verify keyboard focus, 375px and
-desktop layouts, light/dark themes and the console. Wide result tables must scroll
+desktop layouts, light/dark themes, scheduled report create/edit/pause/resume/delete,
+and the console email backend. Wide result tables must scroll
 inside their container instead of widening the entire page.
 
 Keep local state out of Git

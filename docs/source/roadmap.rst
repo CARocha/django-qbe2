@@ -33,16 +33,23 @@ Completed increments
   retain their existing behavior.
 - Database-native Count, Sum and Average over authorized summary sources, with
   bounded source checks and exact Decimal handling across SQLite and PostgreSQL.
+- Daily and weekly scheduled snapshots with owner-scoped controls, fresh policy
+  checks on every run, bounded CSV/optional Excel email delivery and a database-
+  backed command for periodic execution (see :doc:`scheduled_reports`).
 
-Future ideas requiring separate design
----------------------------------------
+Release readiness
+-----------------
 
-The next planned increment is scheduled reports: a saved, independent query
-snapshot that can run on a daily or weekly schedule and email bounded CSV or
-optional Excel attachments to configured recipients. Each run will recheck the
-current user's report permissions and row policies. Further work will be chosen
-from user feedback and receive a scoped design, regression tests, public
-documentation and compatibility checks. Ideas that need separate design include
+The planned feature set for the first stable release is implemented. Remaining
+work is release hardening: complete SQLite/PostgreSQL CI on all supported Python
+and Django combinations, review the final changes, validate the published-consumer
+workflow, and prepare the ``1.0.0`` release. This roadmap sets priorities, not a
+release date or a promise of full SQL parity.
+
+Ideas requiring separate design
+--------------------------------
+
+Further work will be chosen from user feedback and receive a scoped design,
+regression tests, public documentation and compatibility checks. Ideas include
 custom operators, multiple database aliases, a public REST API and group sharing.
-This roadmap sets priorities, not release dates or a promise of full SQL parity.
 Arbitrary client SQL and Python evaluation remain outside the intended interface.

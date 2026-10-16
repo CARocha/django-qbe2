@@ -25,6 +25,12 @@ commits before editing. Do not repeat completed work or overwrite another contri
   ownership and explicit reader/copy recipients. Owner-only modifications apply
   even to superusers. Fresh catalog validation and executing-user row policies
   remain mandatory. Never store result rows or grant model permissions by sharing.
+- ScheduledReport stores an owner-only independent definition snapshot and recurrence;
+  every run reloads the active staff owner, rebuilds the authorized catalog and uses
+  that owner's current row policies. Deliver bounded complete CSV/optional Excel
+  only through the configured Django mailer, BCC recipients, and never persist rows
+  or attachment contents. A permission loss disables the schedule. Database leases,
+  unique occurrence records and bounded retries must remain safe on SQLite/PostgreSQL.
 - Apply the package migration for saved queries; default database only. Preserve
   UUID custom user support. Definition updates preserve recipients; the settings
   route changes sharing explicitly. Public priorities live in docs/source/roadmap.rst.
@@ -63,6 +69,8 @@ Do not add speculative abstractions or request-specific shared mutable state.
   group fields, 10 metrics, 10,000 summary source rows and output rows, and 10,000
   related values per result page or complete export; PostgreSQL report statements
   time out after 5 seconds.
+- Scheduled reports default to 10 BCC recipients and 10 MiB per attachment; keep
+  recipient and byte limits configurable and reject partial results.
 - Escape text formulas in CSV and preserve numeric precision. Streaming targets
   synchronous WSGI; late failures abort the download and must release resources.
 

@@ -119,3 +119,24 @@ streaming begins abort the download; see :doc:`querying` for export behavior.
 Retain your application's authentication, session, CSRF, static serving and
 production deployment configuration. The package provides reporting controls,
 not a deployment configuration for your entire project.
+
+Scheduled report limits
+-----------------------
+
+``QBE2_MAX_SCHEDULED_RECIPIENTS`` defaults to 10 and limits the number of
+normalized email addresses per schedule. ``QBE2_MAX_SCHEDULED_ATTACHMENT_BYTES``
+defaults to 10,485,760 (10 MiB) and limits the complete attachment size.
+``QBE2_SCHEDULED_EMAIL_DOMAIN_ALLOWLIST`` optionally accepts a tuple or list of
+allowed email domains, for example ``("example.com", "partner.example")``.
+
+Scheduled routes
+----------------
+
+The app also provides ``django_qbe2:scheduled_list`` (GET),
+``django_qbe2:scheduled_create`` (POST), ``django_qbe2:scheduled_detail`` (GET),
+``django_qbe2:scheduled_edit`` (GET/POST), ``django_qbe2:scheduled_pause`` and
+``django_qbe2:scheduled_resume`` (POST), and ``django_qbe2:scheduled_delete``
+(GET/POST). ``django_qbe2:scheduled_definition`` (GET) opens an owner's saved
+snapshot in the builder; ``django_qbe2:scheduled_definition_update`` (POST)
+explicitly replaces it. Every schedule route is owner-only, including for
+superusers. See :doc:`scheduled_reports` for setup and operation.

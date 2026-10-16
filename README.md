@@ -2,7 +2,8 @@
 
 A reusable Django app for building authorized reports without writing SQL.
 Choose columns, add typed conditions, follow model relationships, preview paginated
-results, build grouped summaries and export CSV or Excel. Supports **Python 3.13–3.14 and Django 6.0–6.1**.
+results, build grouped summaries, export CSV or Excel, and email scheduled snapshots.
+Supports **Python 3.13–3.14 and Django 6.0–6.1**.
 
 **Documentation:** [Installation, usage, report registration, relationships and more](https://carocha.github.io/django-qbe2/).
 
@@ -68,8 +69,8 @@ urlpatterns += [path("qbe/", include("django_qbe2.urls"))]
 
 Keep standard authentication, sessions and CSRF middleware, APP_DIRS template
 discovery and the admin context processors. Serve the packaged assets with your
-usual Django static-file setup. Run `python manage.py migrate` to create the
-saved-query tables when installing or upgrading to the `0.1.0a4` candidate.
+usual Django static-file setup. Run `python manage.py migrate` to create saved-query
+and scheduled-report tables when using a release that includes those features.
 The catalog is empty until you register reports.
 
 ## Register reports and their policies
@@ -111,7 +112,7 @@ and equality filters offer its options automatically. The complete documentation
 example defines an Order status using `TextChoices`. Adapt the example's fields
 and ownership policy to your own models; `owner` is not a required field name.
 
-For saved queries introduced in `0.1.0a4`, run `python manage.py migrate` after
+For saved queries and scheduled reports, run `python manage.py migrate` after
 upgrading. Preview a report to save its definition, then use **Saved queries** to
 reopen it or manage named recipients. Sharing never grants model permissions or
 access to the creator's rows. See the [saved-query guide](docs/source/saved_queries.rst)
@@ -130,15 +131,19 @@ storage, sharing and current-user authorization rules.
   explicit related-row authorization and bounded collection columns.
 - Bounded CSV streaming, exact decimals, Unicode and safe text formula handling.
 - Optional Excel workbooks for row and summary reports, with typed cells and safe text.
+- Owner-only daily/weekly schedules that email complete bounded reports through
+  Django's configured mailer; see the [scheduled-report guide](docs/source/scheduled_reports.rst).
 - Django Admin styling, light/dark modes and responsive, keyboard-accessible controls.
 
-Database-native aggregates, arbitrary joins, multi-database selection and the visual
-diagram are later work. Excel export requires the optional ``excel`` dependency:
+Database-native aggregates run in the database. Arbitrary joins, multi-database
+selection, public APIs and group sharing need separate design. Excel export requires
+the optional ``excel`` dependency:
 ``python -m pip install 'django-qbe2[excel]'``.
 CSV uses a synchronous streaming iterator intended for WSGI deployment.
-Sources are plain English
-reStructuredText under [docs/source](https://github.com/CARocha/django-qbe2/blob/main/docs/source/index.rst), readable by developers
-and agents. Contributor instructions live in [AGENTS.md](https://github.com/CARocha/django-qbe2/blob/main/AGENTS.md).
+Sources are plain English reStructuredText under
+[docs/source](https://github.com/CARocha/django-qbe2/blob/main/docs/source/index.rst),
+readable by developers and agents. Contributor instructions live in
+[AGENTS.md](https://github.com/CARocha/django-qbe2/blob/main/AGENTS.md).
 
 ## Build the documentation
 
@@ -150,8 +155,9 @@ python -m http.server 8001 --bind 127.0.0.1 --directory docs/_build/html
 ```
 
 Open http://127.0.0.1:8001/. Sphinx is a documentation dependency only. CI checks
-HTML and plain-text builds with warnings treated as errors. A manual GitHub Pages
-workflow is prepared; the documentation site is not yet published.
+HTML and plain-text builds with warnings treated as errors. The published
+documentation is available at
+[carocha.github.io/django-qbe2](https://carocha.github.io/django-qbe2/).
 
 ## License and attribution
 

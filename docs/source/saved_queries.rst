@@ -94,8 +94,9 @@ Bounds
 - The list shows 25 entries per page. Existing report/page/filter/export budgets
   continue to apply when definitions are saved and executed.
 
-Group sharing, collaborative editing, scheduling and stored result snapshots are
-outside this feature. The storage and form helpers are internal APIs; the supported
+Group sharing, collaborative editing and stored result snapshots are outside this
+feature. Scheduled reports use a separate independent snapshot; see
+:doc:`scheduled_reports`. The storage and form helpers are internal APIs; the supported
 integration remains app installation, namespaced routes, settings and report registration.
 
 

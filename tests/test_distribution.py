@@ -47,7 +47,11 @@ class DistributionTests(SimpleTestCase):
                     "templates/django_qbe2/builder.html",
                     "templates/django_qbe2/saved_list.html",
                     "migrations/0001_initial.py",
+                    "migrations/0002_scheduledreport_scheduledreportrun_and_more.py",
                     "static/django_qbe2/builder.js",
+                    "scheduled_execution.py",
+                    "scheduled_exports.py",
+                    "templates/django_qbe2/scheduled_list.html",
                     "static/django_qbe2/qbe.css",
                 ):
                     self.assertTrue(any(name.endswith(asset) for name in names))
@@ -256,6 +260,23 @@ assert client.post('/qbe/saved/create/', {
 copy = SavedQuery.objects.get(owner=bob)
 assert copy.pk != query.pk and not copy.shared_with.exists()
 print('Custom-user migration, shared definitions, scoped execution and copy passed.')
+
+from datetime import time, timedelta
+from unittest.mock import patch
+from django.core.management import call_command
+from django.utils import timezone
+from django_qbe2.models import ScheduledReport, ScheduledReportRun
+schedule = ScheduledReport.objects.create(
+    owner=alice, name='Daily orders', definition=definition, page_size=25,
+    frequency='daily', weekday=None, local_time=time(9), timezone='UTC',
+    recipients=['reports@example.com'], format='csv',
+    next_run_at=timezone.now() - timedelta(hours=1))
+with patch('django_qbe2.scheduled_exports.send_scheduled_report', return_value=1):
+    call_command('qbe2_run_scheduled_reports', limit=5, stdout=io.StringIO())
+run = ScheduledReportRun.objects.get(schedule=schedule)
+assert run.status == ScheduledReportRun.Status.SUCCEEDED
+assert run.attempts == 1
+print('Installed wheel scheduled report command passed.')
 """,
                 cwd=consumer,
             )
@@ -265,5 +286,9 @@ print('Custom-user migration, shared definitions, scoped execution and copy pass
             )
             self.assertIn(
                 "Installed wheel ungrouped/grouped summaries and summary CSV passed.",
+                output,
+            )
+            self.assertIn(
+                "Installed wheel scheduled report command passed.",
                 output,
             )

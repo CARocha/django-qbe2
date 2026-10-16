@@ -10,6 +10,12 @@
   integers where safe; unsupported high-precision fields fail clearly instead
   of returning silently rounded totals.
 
+### Added
+
+- Add owner-only daily and weekly scheduled report snapshots with bounded CSV or
+  optional Excel attachments, BCC recipients, fresh authorization checks, leases,
+  retries and the `qbe2_run_scheduled_reports` management command.
+
 ## 0.1.0a12 — release candidate
 
 ### Changed
