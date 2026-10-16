@@ -137,6 +137,7 @@ class ScheduledReportViewsTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, schedule.name)
+        self.assertContains(response, "CSV attachment · 1 recipient")
         self.assertContains(response, "No runs yet.")
 
     def test_saved_query_sharing_does_not_share_schedule(self):
