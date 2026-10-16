@@ -103,6 +103,6 @@ Unsupported behavior
 --------------------
 
 Generic relations, more than two relationship hops, multiple collection edges in
-one field, database-native aggregates, multi-database selection, Excel and visual
-diagrams are unsupported. Describe the intended workflow and constraints in a
-GitHub issue instead of working around server-side restrictions with arbitrary SQL.
+one field, multi-database selection and visual diagrams are unsupported. Describe
+the intended workflow and constraints in a GitHub issue instead of working around
+server-side restrictions with arbitrary SQL.

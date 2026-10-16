@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.1.0a13 — release candidate
+
 ### Changed
 
 - Summary grouping, Count, Sum and Average's Sum/non-null Count inputs now run in
